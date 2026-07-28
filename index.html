@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Dashboard - Bán Hàng</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-wrapper">
+        <header class="dashboard-header">
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>📊 Dashboard Bán Hàng</h1>
+                    <span id="data-summary">Cập nhật: --</span>
+                </div>
+                <button class="refresh-btn" id="refresh-btn" onclick="dashboard.fetchFromSheet()">
+                    <span>🔄 Cập nhật Dữ Liệu</span>
+                </button>
+            </div>
+
+            <div id="status-message" class="status-message"></div>
+
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="filter-start">Từ ngày</label>
+                    <input type="date" id="filter-start" onchange="dashboard.applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-end">Đến ngày</label>
+                    <input type="date" id="filter-end" onchange="dashboard.applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-thang">Tháng</label>
+                    <select id="filter-thang" onchange="dashboard.applyFilters()">
+                        <option value="all">Tất cả tháng</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-loai">Loại</label>
+                    <select id="filter-loai" onchange="dashboard.applyFilters()">
+                        <option value="all">Tất cả</option>
+                        <option value="Hợp Đồng">Hợp Đồng</option>
+                        <option value="Bán Lẻ">Bán Lẻ</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-khach">Khách</label>
+                    <select id="filter-khach" onchange="dashboard.applyFilters()">
+                        <option value="all">Tất cả khách</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-sanpham">Sản phẩm</label>
+                    <select id="filter-sanpham" onchange="dashboard.applyFilters()">
+                        <option value="all">Tất cả</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            <!-- KPI Cards -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Tổng Đơn Hàng</div>
+                    <div class="kpi-value" id="kpi-donhang">0</div>
+                    <div class="kpi-subtext" id="kpi-donhang-sub"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tổng Lượng (M³)</div>
+                    <div class="kpi-value" id="kpi-luong">0</div>
+                    <div class="kpi-subtext" id="kpi-luong-sub"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tổng Doanh Thu</div>
+                    <div class="kpi-value" id="kpi-doanhtu">0</div>
+                    <div class="kpi-subtext" id="kpi-doanhtu-sub"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Khách Hàng</div>
+                    <div class="kpi-value" id="kpi-khach">0</div>
+                    <div class="kpi-subtext" id="kpi-khach-sub"></div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📈 Xu Hướng Doanh Thu Theo Ngày</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-trend"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>🏆 Top 10 Sản Phẩm</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-sanpham"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>👥 Top 10 Khách Hàng</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-khach"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>📊 Phân Bố Loại Đơn Hàng</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chart-loai"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-card">
+                <h3>📋 Chi Tiết Đơn Hàng</h3>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="dashboard.sortTable('ThoiGian')">Ngày Giờ ▼</th>
+                                <th onclick="dashboard.sortTable('MaPhieuBanHang')">Mã Phiếu</th>
+                                <th onclick="dashboard.sortTable('KhachHang')">Khách Hàng</th>
+                                <th onclick="dashboard.sortTable('SanPham')">Sản Phẩm</th>
+                                <th onclick="dashboard.sortTable('XuatKho')">Kho</th>
+                                <th onclick="dashboard.sortTable('SoLuong')">Số Lượng</th>
+                                <th onclick="dashboard.sortTable('LoaiDonHang')">Loại</th>
+                                <th onclick="dashboard.sortTable('ThanhTien')">Doanh Thu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+
+            <div class="footer">
+                Cập nhật lần cuối: <span id="update-time">--</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv';
+
+        class Dashboard {
+            constructor() {
+                this.rawData = [];
+                this.filteredData = [];
+                this.charts = {};
+                this.currentPage = 0;
+                this.pageSize = 20;
+                this.sortCol = 'ThoiGian';
+                this.sortDir = 'desc';
+                this.init();
+            }
+
+            init() {
+                this.fetchFromSheet();
+            }
+
+            async fetchFromSheet() {
+                const btn = document.getElementById('refresh-btn');
+                const statusMsg = document.getElementById('status-message');
+
+                btn.classList.add('loading');
+                statusMsg.classList.remove('show', 'success', 'error');
+                statusMsg.textContent = '';
+
+                try {
+                    const response = await fetch(SHEET_URL);
+                    if (!response.ok) throw new Error('Không thể tải dữ liệu từ Google Sheet');
+
+                    const csv = await response.text();
+                    this.parseCSV(csv);
+
+                    this.showStatus('✓ Dữ liệu đã được cập nhật thành công', 'success');
+
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    this.showStatus('✗ Lỗi: ' + error.message, 'error');
+                } finally {
+                    btn.classList.remove('loading');
+                }
+            }
+
+            parseCSV(csv) {
+                Papa.parse(csv, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        this.rawData = results.data.map(row => ({
+                            ...row,
+                            SoLuong: parseFloat(row.SoLuong) || 0,
+                            DonGia: parseFloat(row.DonGia) || 0,
+                            ThanhTien: parseFloat(row.ThanhTien) || 0,
+                            date: this.extractDate(row.ThoiGian),
+                            thang: this.extractMonth(row.ThoiGian)
+                        })).filter(r => r.ThoiGian); // Loại hàng trống
+
+                        this.setDefaultDates();
+                        this.populateFilters();
+                        this.applyFilters();
+                        document.getElementById('update-time').textContent = new Date().toLocaleString('vi-VN');
+                    },
+                    error: (error) => {
+                        throw new Error('Lỗi parse CSV: ' + error.message);
+                    }
+                });
+            }
+
+            extractDate(timeStr) {
+                if (!timeStr) return '';
+                const parts = timeStr.split(' ')[0].split('/');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return timeStr;
+            }
+
+            extractMonth(timeStr) {
+                if (!timeStr) return '';
+                const parts = timeStr.split(' ')[0].split('/');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}`;
+                }
+                return timeStr;
+            }
+
+            showStatus(message, type) {
+                const statusMsg = document.getElementById('status-message');
+                statusMsg.textContent = message;
+                statusMsg.className = `status-message show ${type}`;
+                setTimeout(() => {
+                    statusMsg.classList.remove('show');
+                }, 5000);
+            }
+
+            setDefaultDates() {
+                if (this.rawData.length === 0) return;
+                const dates = this.rawData.map(d => d.date).filter(d => d).sort();
+                const minDate = dates[0];
+                const maxDate = dates[dates.length - 1];
+                document.getElementById('filter-start').value = minDate || '';
+                document.getElementById('filter-end').value = maxDate || '';
+            }
+
+            populateFilters() {
+                const thangs = [...new Set(this.rawData.map(d => d.thang).filter(d => d))].sort().reverse();
+                const thangSelect = document.getElementById('filter-thang');
+                thangSelect.innerHTML = '<option value="all">Tất cả tháng</option>';
+                thangs.forEach(thang => {
+                    const option = document.createElement('option');
+                    option.value = thang;
+                    option.textContent = thang;
+                    thangSelect.appendChild(option);
+                });
+
+                const khachs = [...new Set(this.rawData.map(d => d.KhachHang).filter(d => d))].sort();
+                const khachSelect = document.getElementById('filter-khach');
+                khachSelect.innerHTML = '<option value="all">Tất cả khách</option>';
+                khachs.forEach(khach => {
+                    const option = document.createElement('option');
+                    option.value = khach;
+                    option.textContent = khach;
+                    khachSelect.appendChild(option);
+                });
+
+                const sanphams = [...new Set(this.rawData.map(d => d.SanPham).filter(d => d))].sort();
+                const sanphamSelect = document.getElementById('filter-sanpham');
+                sanphamSelect.innerHTML = '<option value="all">Tất cả</option>';
+                sanphams.forEach(sp => {
+                    const option = document.createElement('option');
+                    option.value = sp;
+                    option.textContent = sp;
+                    sanphamSelect.appendChild(option);
+                });
+            }
+
+            applyFilters() {
+                const startDate = document.getElementById('filter-start').value;
+                const endDate = document.getElementById('filter-end').value;
+                const thang = document.getElementById('filter-thang').value;
+                const loai = document.getElementById('filter-loai').value;
+                const khach = document.getElementById('filter-khach').value;
+                const sanpham = document.getElementById('filter-sanpham').value;
+
+                this.filteredData = this.rawData.filter(row => {
+                    if (startDate && row.date < startDate) return false;
+                    if (endDate && row.date > endDate) return false;
+                    if (thang !== 'all' && row.thang !== thang) return false;
+                    if (loai !== 'all' && row.LoaiDonHang !== loai) return false;
+                    if (khach !== 'all' && row.KhachHang !== khach) return false;
+                    if (sanpham !== 'all' && row.SanPham !== sanpham) return false;
+                    return true;
+                });
+
+                this.currentPage = 0;
+                this.renderKPIs();
+                this.renderCharts();
+                this.renderTable();
+            }
+
+            renderKPIs() {
+                const count = this.filteredData.length;
+                const luong = this.filteredData.reduce((s, r) => s + r.SoLuong, 0);
+                const doanhtu = this.filteredData.reduce((s, r) => s + r.ThanhTien, 0);
+                const khachs = [...new Set(this.filteredData.map(d => d.KhachHang).filter(d => d))].length;
+
+                document.getElementById('kpi-donhang').textContent = count.toLocaleString('vi-VN');
+                document.getElementById('kpi-donhang-sub').textContent = `${this.rawData.length > 0 ? (count / this.rawData.length * 100).toFixed(0) : 0}% của tổng`;
+
+                document.getElementById('kpi-luong').textContent = luong.toFixed(1);
+                document.getElementById('kpi-luong-sub').textContent = `Trung bình: ${(luong / count || 0).toFixed(1)} M³`;
+
+                document.getElementById('kpi-doanhtu').textContent = this.formatCurrency(doanhtu);
+                document.getElementById('kpi-doanhtu-sub').textContent = doanhtu > 0 ? `${(doanhtu / count || 0).toFixed(0)} / đơn` : 'Chưa có giá';
+
+                document.getElementById('kpi-khach').textContent = khachs.toLocaleString('vi-VN');
+                document.getElementById('kpi-khach-sub').textContent = `Khách hàng độc nhất`;
+            }
+
+            renderCharts() {
+                const colors = ['#2D7A3E', '#4CAF50', '#81C784', '#A5D6A7', '#C8E6C9', '#66BB6A', '#43A047', '#FFA726', '#EF5350', '#AB47BC'];
+
+                // Chart 1: Trend
+                const trendData = {};
+                this.filteredData.forEach(row => {
+                    if (!trendData[row.date]) trendData[row.date] = { luong: 0, doanhtu: 0 };
+                    trendData[row.date].luong += row.SoLuong;
+                    trendData[row.date].doanhtu += row.ThanhTien;
+                });
+                const sortedDates = Object.keys(trendData).sort();
+                const trendLuong = sortedDates.map(d => trendData[d].luong);
+                const trendDoanhTu = sortedDates.map(d => trendData[d].doanhtu);
+
+                const ctx1 = document.getElementById('chart-trend').getContext('2d');
+                if (this.charts.trend) this.charts.trend.destroy();
+                this.charts.trend = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: sortedDates,
+                        datasets: [
+                            {
+                                label: 'Số lượng (M³)',
+                                data: trendLuong,
+                                borderColor: colors[0],
+                                backgroundColor: colors[0] + '15',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Doanh thu (đ)',
+                                data: trendDoanhTu,
+                                borderColor: colors[1],
+                                backgroundColor: colors[1] + '15',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.4,
+                                pointRadius: 3,
+                                yAxisID: 'y1',
+                                hidden: trendDoanhTu.every(v => v === 0)
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
+                            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y > 1000000 ? (ctx.parsed.y / 1000000).toFixed(1) + 'M' : ctx.parsed.y.toFixed(1)}` } }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Số lượng (M³)' } },
+                            y1: { type: 'linear', position: 'right', title: { display: true, text: 'Doanh thu (đ)' } }
+                        }
+                    }
+                });
+
+                // Chart 2: Top sản phẩm
+                const spGroups = {};
+                this.filteredData.forEach(row => {
+                    if (!spGroups[row.SanPham]) spGroups[row.SanPham] = 0;
+                    spGroups[row.SanPham] += row.SoLuong;
+                });
+                const topSp = Object.entries(spGroups).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+                const ctx2 = document.getElementById('chart-sanpham').getContext('2d');
+                if (this.charts.sanpham) this.charts.sanpham.destroy();
+                this.charts.sanpham = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: topSp.map(x => x[0]),
+                        datasets: [{
+                            label: 'Số lượng',
+                            data: topSp.map(x => x[1]),
+                            backgroundColor: colors.map(c => c + 'CC'),
+                            borderColor: colors,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
+
+                // Chart 3: Top khách
+                const khGroups = {};
+                this.filteredData.forEach(row => {
+                    if (!khGroups[row.KhachHang]) khGroups[row.KhachHang] = 0;
+                    khGroups[row.KhachHang] += row.SoLuong;
+                });
+                const topKh = Object.entries(khGroups).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+                const ctx3 = document.getElementById('chart-khach').getContext('2d');
+                if (this.charts.khach) this.charts.khach.destroy();
+                this.charts.khach = new Chart(ctx3, {
+                    type: 'bar',
+                    data: {
+                        labels: topKh.map(x => x[0]),
+                        datasets: [{
+                            label: 'Số lượng',
+                            data: topKh.map(x => x[1]),
+                            backgroundColor: colors.map(c => c + 'CC'),
+                            borderColor: colors,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
+
+                // Chart 4: Loại đơn
+                const loaiGroups = {};
+                this.filteredData.forEach(row => {
+                    if (!loaiGroups[row.LoaiDonHang]) loaiGroups[row.LoaiDonHang] = 0;
+                    loaiGroups[row.LoaiDonHang]++;
+                });
+
+                const ctx4 = document.getElementById('chart-loai').getContext('2d');
+                if (this.charts.loai) this.charts.loai.destroy();
+                this.charts.loai = new Chart(ctx4, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(loaiGroups),
+                        datasets: [{
+                            data: Object.values(loaiGroups),
+                            backgroundColor: colors.slice(0, Object.keys(loaiGroups).length).map(c => c + 'CC'),
+                            borderColor: '#fff',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: {
+                            legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } },
+                            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed} đơn` } }
+                        }
+                    }
+                });
+            }
+
+            renderTable() {
+                const start = this.currentPage * this.pageSize;
+                const end = Math.min(start + this.pageSize, this.filteredData.length);
+                const pageData = this.filteredData.slice(start, end);
+
+                let html = '';
+                pageData.forEach(row => {
+                    html += '<tr>';
+                    html += `<td>${row.ThoiGian || '-'}</td>`;
+                    html += `<td>${row.MaPhieuBanHang || '-'}</td>`;
+                    html += `<td>${row.KhachHang || '-'}</td>`;
+                    html += `<td>${row.SanPham || '-'}</td>`;
+                    html += `<td>${row.XuatKho || '-'}</td>`;
+                    html += `<td>${row.SoLuong ? row.SoLuong.toFixed(1) : '-'}</td>`;
+                    html += `<td>${row.LoaiDonHang || '-'}</td>`;
+                    html += `<td>${row.ThanhTien > 0 ? this.formatCurrency(row.ThanhTien) : '-'}</td>`;
+                    html += '</tr>';
+                });
+                document.getElementById('table-body').innerHTML = html;
+
+                const total = this.filteredData.length;
+                const pages = Math.ceil(total / this.pageSize);
+                let pagination = `<span>Hiển thị ${start + 1}-${end} của ${total} dòng</span>`;
+                if (pages > 1) {
+                    pagination += ' | ';
+                    if (this.currentPage > 0) pagination += `<button onclick="dashboard.goPage(${this.currentPage - 1})">← Trước</button>`;
+                    pagination += ` Trang ${this.currentPage + 1}/${pages} `;
+                    if (this.currentPage < pages - 1) pagination += `<button onclick="dashboard.goPage(${this.currentPage + 1})">Sau →</button>`;
+                }
+                document.getElementById('pagination').innerHTML = pagination;
+            }
+
+            sortTable(col) {
+                if (this.sortCol === col) {
+                    this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortCol = col;
+                    this.sortDir = 'desc';
+                }
+                this.filteredData.sort((a, b) => {
+                    let aVal = a[col], bVal = b[col];
+                    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+                    let cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                    return this.sortDir === 'asc' ? cmp : -cmp;
+                });
+                this.currentPage = 0;
+                this.renderTable();
+            }
+
+            goPage(page) {
+                this.currentPage = page;
+                this.renderTable();
+            }
+
+            formatCurrency(value) {
+                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                return value.toFixed(0);
+            }
+        }
+
+        const dashboard = new Dashboard();
+    </script>
+</body>
+
+</html>
