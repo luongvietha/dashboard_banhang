@@ -31,11 +31,11 @@
             <div class="filters-container">
                 <div class="filter-group">
                     <label for="filter-start">Từ ngày</label>
-                    <input type="date" id="filter-start" onchange="dashboard.applyFilters()">
+                    <input type="date" id="filter-start" onchange="dashboard.onDateChange()">
                 </div>
                 <div class="filter-group">
                     <label for="filter-end">Đến ngày</label>
-                    <input type="date" id="filter-end" onchange="dashboard.applyFilters()">
+                    <input type="date" id="filter-end" onchange="dashboard.onDateChange()">
                 </div>
                 <div class="filter-group">
                     <label for="filter-thang">Tháng</label>
@@ -47,8 +47,6 @@
                     <label for="filter-loai">Loại</label>
                     <select id="filter-loai" onchange="dashboard.applyFilters()">
                         <option value="all">Tất cả</option>
-                        <option value="Hợp Đồng">Hợp Đồng</option>
-                        <option value="Bán Lẻ">Bán Lẻ</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -211,7 +209,7 @@
                         })).filter(r => r.ThoiGian); // Loại hàng trống
 
                         this.setDefaultDates();
-                        this.populateFilters();
+                        this.updateFilterOptions();
                         this.applyFilters();
                         document.getElementById('update-time').textContent = new Date().toLocaleString('vi-VN');
                     },
@@ -257,36 +255,44 @@
                 document.getElementById('filter-end').value = maxDate || '';
             }
 
-            populateFilters() {
-                const thangs = [...new Set(this.rawData.map(d => d.thang).filter(d => d))].sort().reverse();
-                const thangSelect = document.getElementById('filter-thang');
-                thangSelect.innerHTML = '<option value="all">Tất cả tháng</option>';
-                thangs.forEach(thang => {
-                    const option = document.createElement('option');
-                    option.value = thang;
-                    option.textContent = thang;
-                    thangSelect.appendChild(option);
+            // Trả về dữ liệu chỉ lọc theo khoảng ngày (dùng làm cơ sở cho các dropdown)
+            getDateRangeData() {
+                const startDate = document.getElementById('filter-start').value;
+                const endDate = document.getElementById('filter-end').value;
+                return this.rawData.filter(row => {
+                    if (startDate && row.date < startDate) return false;
+                    if (endDate && row.date > endDate) return false;
+                    return true;
                 });
+            }
 
-                const khachs = [...new Set(this.rawData.map(d => d.KhachHang).filter(d => d))].sort();
-                const khachSelect = document.getElementById('filter-khach');
-                khachSelect.innerHTML = '<option value="all">Tất cả khách</option>';
-                khachs.forEach(khach => {
+            // Cập nhật lại danh sách trong 1 dropdown, giữ nguyên lựa chọn hiện tại nếu vẫn còn hợp lệ
+            populateSelect(id, values, allLabel) {
+                const select = document.getElementById(id);
+                const currentValue = select.value;
+                select.innerHTML = `<option value="all">${allLabel}</option>`;
+                values.forEach(v => {
                     const option = document.createElement('option');
-                    option.value = khach;
-                    option.textContent = khach;
-                    khachSelect.appendChild(option);
+                    option.value = v;
+                    option.textContent = v;
+                    select.appendChild(option);
                 });
+                select.value = (currentValue !== 'all' && values.includes(currentValue)) ? currentValue : 'all';
+            }
 
-                const sanphams = [...new Set(this.rawData.map(d => d.SanPham).filter(d => d))].sort();
-                const sanphamSelect = document.getElementById('filter-sanpham');
-                sanphamSelect.innerHTML = '<option value="all">Tất cả</option>';
-                sanphams.forEach(sp => {
-                    const option = document.createElement('option');
-                    option.value = sp;
-                    option.textContent = sp;
-                    sanphamSelect.appendChild(option);
-                });
+            // Xây lại các dropdown Tháng/Loại/Khách/Sản phẩm chỉ với giá trị nằm trong khoảng ngày đang chọn
+            updateFilterOptions() {
+                const data = this.getDateRangeData();
+                this.populateSelect('filter-thang', [...new Set(data.map(d => d.thang).filter(d => d))].sort().reverse(), 'Tất cả tháng');
+                this.populateSelect('filter-loai', [...new Set(data.map(d => d.LoaiDonHang).filter(d => d))].sort(), 'Tất cả');
+                this.populateSelect('filter-khach', [...new Set(data.map(d => d.KhachHang).filter(d => d))].sort(), 'Tất cả khách');
+                this.populateSelect('filter-sanpham', [...new Set(data.map(d => d.SanPham).filter(d => d))].sort(), 'Tất cả');
+            }
+
+            // Gọi khi người dùng đổi "Từ ngày" / "Đến ngày"
+            onDateChange() {
+                this.updateFilterOptions();
+                this.applyFilters();
             }
 
             applyFilters() {
