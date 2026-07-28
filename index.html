@@ -31,33 +31,33 @@
             <div class="filters-container">
                 <div class="filter-group">
                     <label for="filter-start">Từ ngày</label>
-                    <input type="date" id="filter-start" onchange="dashboard.onDateChange()">
+                    <input type="date" id="filter-start" onchange="dashboard.onFilterChange()">
                 </div>
                 <div class="filter-group">
                     <label for="filter-end">Đến ngày</label>
-                    <input type="date" id="filter-end" onchange="dashboard.onDateChange()">
+                    <input type="date" id="filter-end" onchange="dashboard.onFilterChange()">
                 </div>
                 <div class="filter-group">
                     <label for="filter-thang">Tháng</label>
-                    <select id="filter-thang" onchange="dashboard.applyFilters()">
+                    <select id="filter-thang" onchange="dashboard.onFilterChange()">
                         <option value="all">Tất cả tháng</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="filter-loai">Loại</label>
-                    <select id="filter-loai" onchange="dashboard.applyFilters()">
+                    <select id="filter-loai" onchange="dashboard.onFilterChange()">
                         <option value="all">Tất cả</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="filter-khach">Khách</label>
-                    <select id="filter-khach" onchange="dashboard.applyFilters()">
+                    <select id="filter-khach" onchange="dashboard.onFilterChange()">
                         <option value="all">Tất cả khách</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="filter-sanpham">Sản phẩm</label>
-                    <select id="filter-sanpham" onchange="dashboard.applyFilters()">
+                    <select id="filter-sanpham" onchange="dashboard.onFilterChange()">
                         <option value="all">Tất cả</option>
                     </select>
                 </div>
@@ -255,13 +255,23 @@
                 document.getElementById('filter-end').value = maxDate || '';
             }
 
-            // Trả về dữ liệu chỉ lọc theo khoảng ngày (dùng làm cơ sở cho các dropdown)
-            getDateRangeData() {
+            // Trả về dữ liệu đã áp toàn bộ filter hiện tại, TRỪ các key liệt kê trong excludeKeys.
+            // Dùng để tính option cho 1 dropdown dựa trên các lựa chọn còn lại (lọc chéo - faceted filtering).
+            getFilteredData(excludeKeys = []) {
                 const startDate = document.getElementById('filter-start').value;
                 const endDate = document.getElementById('filter-end').value;
+                const thang = document.getElementById('filter-thang').value;
+                const loai = document.getElementById('filter-loai').value;
+                const khach = document.getElementById('filter-khach').value;
+                const sanpham = document.getElementById('filter-sanpham').value;
+
                 return this.rawData.filter(row => {
                     if (startDate && row.date < startDate) return false;
                     if (endDate && row.date > endDate) return false;
+                    if (!excludeKeys.includes('thang') && thang !== 'all' && row.thang !== thang) return false;
+                    if (!excludeKeys.includes('loai') && loai !== 'all' && row.LoaiDonHang !== loai) return false;
+                    if (!excludeKeys.includes('khach') && khach !== 'all' && row.KhachHang !== khach) return false;
+                    if (!excludeKeys.includes('sanpham') && sanpham !== 'all' && row.SanPham !== sanpham) return false;
                     return true;
                 });
             }
@@ -280,17 +290,26 @@
                 select.value = (currentValue !== 'all' && values.includes(currentValue)) ? currentValue : 'all';
             }
 
-            // Xây lại các dropdown Tháng/Loại/Khách/Sản phẩm chỉ với giá trị nằm trong khoảng ngày đang chọn
+            // Xây lại cả 4 dropdown: mỗi dropdown chỉ hiện giá trị còn khớp với TẤT CẢ filter khác
+            // (ngày + 3 dropdown còn lại). Vd: chọn Khách A → Sản phẩm chỉ hiện SP mà khách A từng mua
+            // trong khoảng ngày đang chọn; đổi ngày → Khách/Sản phẩm cũng thu hẹp theo ngày đó.
             updateFilterOptions() {
-                const data = this.getDateRangeData();
-                this.populateSelect('filter-thang', [...new Set(data.map(d => d.thang).filter(d => d))].sort().reverse(), 'Tất cả tháng');
-                this.populateSelect('filter-loai', [...new Set(data.map(d => d.LoaiDonHang).filter(d => d))].sort(), 'Tất cả');
-                this.populateSelect('filter-khach', [...new Set(data.map(d => d.KhachHang).filter(d => d))].sort(), 'Tất cả khách');
-                this.populateSelect('filter-sanpham', [...new Set(data.map(d => d.SanPham).filter(d => d))].sort(), 'Tất cả');
+                this.populateSelect('filter-thang',
+                    [...new Set(this.getFilteredData(['thang']).map(d => d.thang).filter(d => d))].sort().reverse(),
+                    'Tất cả tháng');
+                this.populateSelect('filter-loai',
+                    [...new Set(this.getFilteredData(['loai']).map(d => d.LoaiDonHang).filter(d => d))].sort(),
+                    'Tất cả');
+                this.populateSelect('filter-khach',
+                    [...new Set(this.getFilteredData(['khach']).map(d => d.KhachHang).filter(d => d))].sort(),
+                    'Tất cả khách');
+                this.populateSelect('filter-sanpham',
+                    [...new Set(this.getFilteredData(['sanpham']).map(d => d.SanPham).filter(d => d))].sort(),
+                    'Tất cả');
             }
 
-            // Gọi khi người dùng đổi "Từ ngày" / "Đến ngày"
-            onDateChange() {
+            // Gọi khi người dùng đổi bất kỳ filter nào (ngày, tháng, loại, khách, sản phẩm)
+            onFilterChange() {
                 this.updateFilterOptions();
                 this.applyFilters();
             }
