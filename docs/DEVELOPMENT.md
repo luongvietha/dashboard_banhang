@@ -1,266 +1,130 @@
-# ✨ Dashboard Features - Chi Tiết
+# 🔧 Development Guide
 
-## 📊 KPI Cards
-
-### 1. Tổng Đơn Hàng
-- **Hiển thị:** Số lượng đơn hàng trong khoảng lọc
-- **Phụ thông tin:** % so với tổng số đơn
-- **Dùng để:** Theo dõi khối lượng giao dịch
-
-### 2. Tổng Lượng (M³)
-- **Hiển thị:** Tổng số m³ bán được
-- **Phụ thông tin:** Trung bình m³ per đơn
-- **Dùng để:** Kiểm soát sản lượng
-
-### 3. Tổng Doanh Thu
-- **Hiển thị:** Tổng tiền bán hàng
-- **Phụ thông tin:** Doanh số bình quân/đơn
-- **Dùng để:** Giám sát tài chính
-- **Lưu ý:** Chỉ tính các đơn có giá (Bán Lẻ chủ yếu)
-
-### 4. Số Khách Hàng
-- **Hiển thị:** Số lượng khách hàng độc lập
-- **Phụ thông tin:** "Khách hàng độc nhất"
-- **Dùng để:** Đa dạng hóa khách
+Trước khi sửa, xem [`ARCHITECTURE.md`](ARCHITECTURE.md) để biết file nào chịu trách nhiệm gì. Quy tắc chung: **sửa CSS → `css/styles.css`**, **sửa logic Bán Hàng → `js/sales-dashboard.js`**, **sửa logic Sản Xuất → `js/production-dashboard.js`**, **sửa cấu trúc HTML → `index.html`**.
 
 ---
 
-## 📈 Biểu Đồ
+## 1. Thêm filter mới
 
-### 1. Xu Hướng Doanh Thu Theo Ngày (Line Chart)
-**Hiển thị:** 2 trục Y
-- Trục trái: Số lượng (M³) - đường xanh
-- Trục phải: Doanh thu (đ) - đường xanh nhạt
+Ví dụ: thêm filter "Nhân viên" cho tab Bán Hàng.
 
-**Tính năng:**
-- Hover xem chi tiết ngày
-- Có thể ẩn/hiện dataset (click legend)
-- Responsive theo screen size
-
-**Dùng để:** Xem xu hướng bán hàng qua thời gian
-
-### 2. Top 10 Sản Phẩm (Horizontal Bar)
-**Hiển thị:** Sắp xếp theo số lượng (M³) giảm dần
-
-**Các sản phẩm:** C1, C2, C3, D12, MB, CPTC2, etc.
-
-**Dùng để:** 
-- Xác định sản phẩm bán chạy
-- Tập trung marketing vào top
-
-### 3. Top 10 Khách Hàng (Horizontal Bar)
-**Hiển thị:** Sắp xếp theo số lượng (M³) giảm dần
-
-**Dùng để:**
-- Xác định khách VIP
-- Focus vào relationship management
-
-### 4. Phân Bố Loại Đơn (Doughnut Chart)
-**So sánh:** Hợp Đồng vs Bán Lẻ
-
-**Cách xem:**
-- Hover để xem số đơn
-- Phần trăm tính từ tổng đơn hàng
-- Màu khác nhau dễ phân biệt
-
-**Dùng để:** 
-- Kiểm tra cân bằng 2 loại
-- Đánh giá mix bán hàng
-
----
-
-## 🔍 Filters (Bộ Lọc)
-
-### 1. Khoảng Ngày (Date Range)
-- **Từ ngày - Đến ngày:** Lọc dữ liệu trong khoảng
-- **Default:** Min date - Max date (tự động)
-- **Sử dụng:** Phân tích theo giai đoạn
-
-**Ví dụ:**
-```
-Từ: 01/07/2026
-Đến: 15/07/2026
-→ Chỉ xem dữ liệu 01-15 tháng 7
+**Bước 1 — `index.html`:** thêm select trong `.filters-container` của `#view-banhang`:
+```html
+<div class="filter-group">
+    <label for="filter-nhanvien">Nhân viên</label>
+    <select id="filter-nhanvien" onchange="dashboard.onFilterChange()">
+        <option value="all">Tất cả</option>
+    </select>
+</div>
 ```
 
-### 2. Tháng (Month)
-- **Chọn:** Dropdown tháng/năm
-- **Format:** 2026-07, 2026-08, etc.
-- **Sử dụng:** Lọc nhanh theo tháng
-
-### 3. Loại Đơn (Type)
-- **Tất cả:** Hợp Đồng + Bán Lẻ
-- **Hợp Đồng:** Chỉ doanh số hợp đồng
-- **Bán Lẻ:** Chỉ bán lẻ
-
-**Sử dụng:** Phân tích riêng từng loại
-
-### 4. Khách Hàng (Customer)
-- **Tất cả khách:** Không filter
-- **Khách cụ thể:** Lọc từng khách
-- **Dynamic:** List tự động từ dữ liệu
-
-**Sử dụng:** Xem chi tiết từng khách
-
-### 5. Sản Phẩm (Product)
-- **Tất cả:** Không filter
-- **Sản phẩm cụ thể:** Lọc từng sản phẩm
-- **Dynamic:** List tự động từ dữ liệu
-
-**Sử dụng:** Phân tích từng sản phẩm
-
----
-
-## 🔄 Cập Nhật Dữ Liệu
-
-### Nút "🔄 Cập nhật Dữ Liệu"
-- **Click:** Fetch dữ liệu mới từ Google Sheet
-- **Trạng thái:** 
-  - ✓ Thành công (xanh)
-  - ✗ Lỗi (đỏ)
-- **Loading:** Spinner xoay khi đang fetch
-
-**Quy trình:**
-1. Click nút
-2. Fetch CSV từ Google Sheets API
-3. Parse dữ liệu
-4. Reset filters & refresh charts
-5. Hiển thị thông báo
-
-**Tốc độ:** 2-5 giây (tùy kích thước dữ liệu)
-
----
-
-## 📋 Bảng Chi Tiết (Table)
-
-### Cột Hiển Thị
-| Cột | Nội Dung |
-|-----|----------|
-| Ngày Giờ | Timestamp đơn hàng |
-| Mã Phiếu | Mã phiếu bán hàng |
-| Khách Hàng | Mã khách |
-| Sản Phẩm | Loại sản phẩm |
-| Kho | Kho xuất (Kho Cát/Đá) |
-| Số Lượng | M³ |
-| Loại | Hợp Đồng/Bán Lẻ |
-| Doanh Thu | Thành tiền (VND) |
-
-### Tính Năng
-**Sorting:**
-- Click header để sort A-Z hoặc Z-A
-- Tự động hiển thị ▼ indicator
-
-**Phân Trang:**
-- Mặc định: 20 hàng/trang
-- Nút Trước/Sau để chuyển trang
-- Hiển thị "Hiển thị X-Y của Z dòng"
-
-**Hover:**
-- Row highlight khi hover
-- Dễ xem dòng đang chọn
-
----
-
-## 🎨 Giao Diện
-
-### Responsive Design
-- **Desktop:** Full layout (3 chart/row)
-- **Tablet:** 2 chart/row, filters wrap
-- **Mobile:** 1 chart/row, stack filters
-
-### Color Scheme
-- **Primary:** Xanh lá (#2D7A3E) - branding
-- **Background:** Nhẹ (#f5f5f5) - dễ đọc
-- **Text:** Tối (#212529) - contrast tốt
-- **Borders:** Mảnh (#e0e0e0) - không nặng
-
-### Accessibility
-- ✓ Keyboard navigation (Tab)
-- ✓ Form labels rõ ràng
-- ✓ Color không phải indicator duy nhất
-- ✓ Font size 12px+ (readable)
-
----
-
-## 🔌 API Integration
-
-### Google Sheets API
-- **URL:** `https://sheets.googleapis.com/v4/spreadsheets`
-- **Method:** GET
-- **Auth:** API Key
-- **Format:** CSV
-
-**Flow:**
+**Bước 2 — `js/sales-dashboard.js`:**
+- Trong `getFilteredData(excludeKeys)`: đọc giá trị filter mới và thêm điều kiện lọc
+```javascript
+const nhanvien = document.getElementById('filter-nhanvien').value;
+// ...
+if (!excludeKeys.includes('nhanvien') && nhanvien !== 'all' && row.NhanVien !== nhanvien) return false;
 ```
-1. User click "Cập nhật"
-   ↓
-2. Fetch từ API với API Key & Sheet ID
-   ↓
-3. Parse CSV → JSON
-   ↓
-4. Validate data (headers khớp không?)
-   ↓
-5. Update this.rawData
-   ↓
-6. Apply filters → Refresh all views
+- Trong `updateFilterOptions()`: thêm dòng populate cho dropdown mới
+```javascript
+this.populateSelect('filter-nhanvien',
+    [...new Set(this.getFilteredData(['nhanvien']).map(d => d.NhanVien).filter(d => d))].sort(),
+    'Tất cả');
+```
+- Trong `applyFilters()`: thêm điều kiện lọc tương ứng (giống `getFilteredData` nhưng không có excludeKeys)
+
+Áp dụng tương tự cho tab Sản Xuất, chỉ thay file thành `js/production-dashboard.js` và các id filter là `sx-filter-...`.
+
+---
+
+## 2. Thêm biểu đồ mới
+
+Ví dụ: thêm "Doanh thu theo khách hàng" cho tab Bán Hàng.
+
+**Bước 1 — `index.html`:** thêm 1 khối `.chart-card` mới trong `.charts-grid`:
+```html
+<div class="chart-card">
+    <h3>💰 Doanh Thu Theo Khách Hàng</h3>
+    <div class="chart-wrapper">
+        <canvas id="chart-doanhthu-khach"></canvas>
+    </div>
+</div>
 ```
 
-### Rate Limiting
-- Google Sheets API: 500 req/100 sec
-- Mỗi click: ~1-2 requests
-- **Safe:** 1 click/giây không vấn đề
+**Bước 2 — `js/sales-dashboard.js`:** thêm logic vẽ chart trong hàm `renderCharts()`, theo mẫu các chart có sẵn:
+```javascript
+const khachRevenue = {};
+this.filteredData.forEach(row => {
+    if (!khachRevenue[row.KhachHang]) khachRevenue[row.KhachHang] = 0;
+    khachRevenue[row.KhachHang] += row.ThanhTien;
+});
+const topKhachRevenue = Object.entries(khachRevenue).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+const ctx5 = document.getElementById('chart-doanhthu-khach').getContext('2d');
+if (this.charts.doanhthuKhach) this.charts.doanhthuKhach.destroy();
+this.charts.doanhthuKhach = new Chart(ctx5, {
+    type: 'bar',
+    data: {
+        labels: topKhachRevenue.map(x => x[0]),
+        datasets: [{ label: 'Doanh thu', data: topKhachRevenue.map(x => x[1]), backgroundColor: '#4CAF50' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+});
+```
+
+Luôn nhớ gọi `.destroy()` chart cũ trước khi tạo mới (tránh chart chồng lên nhau khi filter thay đổi).
 
 ---
 
-## 🛡️ Bảo Mật & Limitations
+## 3. Thêm cột dữ liệu mới
 
-### Bảo Mật
-- ✓ API Key read-only (chỉ xem)
-- ✓ Sheet share quyền Viewer (chỉ xem)
-- ✓ HTTPS tự động (GitHub Pages)
-
-### Giới Hạn
-- Max dữ liệu: ~10,000 hàng (OK)
-- Vượt 50K hàng: cần pagination server-side
-- Offline: Không hoạt động (cần API)
-
-### Data Format
-Yêu cầu Google Sheet:
-- Column headers hàng đầu
-- Không hàng trống giữa dữ liệu
-- SoLuong, DonGia, ThanhTien = Numbers
+1. Thêm cột vào Google Sheet tương ứng
+2. Với sheet **Bán Hàng**: dashboard tự nhận cột mới vì `parseCSV()` dùng spread `...row` để giữ nguyên mọi cột CSV — không cần sửa code nếu chỉ muốn hiển thị ở bảng
+3. Với sheet **Sản Xuất**: `parseCSV()` chỉ trích các trường cụ thể (không dùng spread), nên cần thêm dòng ánh xạ cột mới trong `parseCSV()` nếu muốn dùng cột đó cho filter/chart
+4. Muốn dùng cột mới cho filter/chart/KPI → xem mục 1 và 2 ở trên
 
 ---
 
-## 📱 Browser Support
+## 4. Thêm tab (dashboard) thứ 3
 
-### Tested On
-- ✓ Chrome 90+
-- ✓ Firefox 88+
-- ✓ Safari 14+
-- ✓ Edge 90+
-- ✓ Mobile Chrome/Safari
-
-### Not Supported
-- ✗ IE 11 (outdated)
-- ✗ Old Safari (< 12)
+1. Tạo `js/xxx-dashboard.js` theo khuôn class của `production-dashboard.js` (copy làm mẫu, đổi tên field/id)
+2. Thêm 1 khối `<div class="dashboard-wrapper view-section" id="view-xxx">...</div>` trong `index.html`
+3. Thêm 1 nút nav: `<button class="nav-btn" id="nav-xxx" onclick="switchView('xxx')">...</button>`
+4. Cập nhật `switchView()` trong `js/app.js` để toggle thêm section/nav mới, và khởi tạo `const xxxDashboard = new XxxDashboard();`
+5. Thêm `<script src="js/xxx-dashboard.js"></script>` vào `index.html` trước `app.js`
 
 ---
 
-## 🚀 Performance
+## Testing checklist
 
-### Load Time
-- Initial load: 2-3 giây
-- Cập nhật dữ liệu: 2-5 giây
-- Filter/Sort: Instant (<100ms)
-- Chart update: <1 giây
+- [ ] Mở `index.html` bằng Chrome (double-click hoặc kéo vào trình duyệt)
+- [ ] F12 → Console: không có lỗi đỏ
+- [ ] Cả 2 tab load được, chuyển tab mượt
+- [ ] Filter lọc chéo hoạt động đúng ở cả 2 tab
+- [ ] Sort bảng, phân trang hoạt động
+- [ ] Nút "Cập nhật Dữ Liệu" chạy được, không lỗi
+- [ ] Responsive: thu nhỏ cửa sổ / F12 → Device mode, kiểm tra mobile
 
-### Optimization Tips
-1. Cache API responses
-2. Lazy load charts
-3. Debounce filters (nếu >50K rows)
-4. Minify CSS/JS
+## Naming convention
 
----
+- Function/method: `camelCase` (`getFilteredData`)
+- Hằng số cấu hình: `UPPER_CASE` (`SHEET_URL`, `SHEET_URL_SANXUAT`)
+- id/class trong HTML: `kebab-case` (`filter-start`, `sx-kpi-tram`)
+- Class JS: `PascalCase` (`Dashboard`, `ProductionDashboard`)
+- Tab Sản Xuất luôn tiền tố `sx-` cho id để không đụng với tab Bán Hàng
 
-Bất kỳ tính năng nào bạn muốn thêm? 🎯
+## Common issues & fixes
+
+| Vấn đề | Nguyên nhân thường gặp | Fix |
+|---|---|---|
+| "Failed to fetch" | Sheet chưa share Viewer / sai Sheet ID | Xem [`SETUP.md`](SETUP.md) |
+| Dropdown luôn trống | Tên cột trong Sheet không khớp | Kiểm tra tên cột đúng theo [`SETUP.md`](SETUP.md) |
+| Chart không hiển thị | Sai id canvas, hoặc chart cũ chưa `.destroy()` | Kiểm tra id, đảm bảo gọi destroy trước khi tạo Chart mới |
+| CSS không áp dụng | Đường dẫn `css/styles.css` sai, hoặc cache trình duyệt | Ctrl+Shift+R để hard refresh |
+
+## Roadmap
+
+- [ ] Export dữ liệu ra Excel/CSV
+- [ ] Dark mode
+- [ ] So sánh kỳ trước (YoY / MoM)
+- [ ] Thêm tab thứ 3 (vd Công nợ, Kho)
