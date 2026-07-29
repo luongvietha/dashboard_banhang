@@ -10,6 +10,10 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -29,6 +33,14 @@
                 <button class="refresh-btn" id="refresh-btn" onclick="dashboard.fetchFromSheet()">
                     <span>🔄 Cập nhật Dữ Liệu</span>
                 </button>
+            </div>
+
+            <div class="quick-filters">
+                <button onclick="dashboard.applyQuickRange('today')">Hôm nay</button>
+                <button onclick="dashboard.applyQuickRange('7days')">7 Ngày qua</button>
+                <button onclick="dashboard.applyQuickRange('thisMonth')">Tháng này</button>
+                <button onclick="dashboard.applyQuickRange('lastMonth')">Tháng trước</button>
+                <button onclick="dashboard.applyQuickRange('reset')">Xóa bộ lọc</button>
             </div>
 
             <div id="status-message" class="status-message"></div>
@@ -72,22 +84,22 @@
         <div class="dashboard-container">
             <!-- KPI Cards -->
             <div class="kpi-row">
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Tổng Đơn Hàng</div>
                     <div class="kpi-value" id="kpi-donhang">0</div>
                     <div class="kpi-subtext" id="kpi-donhang-sub"></div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Tổng Lượng (M³)</div>
                     <div class="kpi-value" id="kpi-luong">0</div>
                     <div class="kpi-subtext" id="kpi-luong-sub"></div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Tổng Doanh Thu</div>
                     <div class="kpi-value" id="kpi-doanhtu">0</div>
                     <div class="kpi-subtext" id="kpi-doanhtu-sub"></div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Khách Hàng</div>
                     <div class="kpi-value" id="kpi-khach">0</div>
                     <div class="kpi-subtext" id="kpi-khach-sub"></div>
@@ -96,13 +108,13 @@
 
             <!-- Charts -->
             <div class="charts-grid">
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>📈 Xu Hướng Doanh Thu Theo Ngày</h3>
                     <div class="chart-wrapper">
                         <canvas id="chart-trend"></canvas>
                     </div>
                 </div>
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>🏆 Top 10 Sản Phẩm</h3>
                     <div class="chart-wrapper">
                         <canvas id="chart-sanpham"></canvas>
@@ -111,13 +123,13 @@
             </div>
 
             <div class="charts-grid">
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>👥 Top 10 Khách Hàng</h3>
                     <div class="chart-wrapper">
                         <canvas id="chart-khach"></canvas>
                     </div>
                 </div>
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>📊 Phân Bố Loại Đơn Hàng</h3>
                     <div class="chart-wrapper">
                         <canvas id="chart-loai"></canvas>
@@ -126,7 +138,7 @@
             </div>
 
             <!-- Table -->
-            <div class="table-card">
+            <div class="table-card dashboard-card">
                 <h3>📋 Chi Tiết Đơn Hàng</h3>
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -166,6 +178,14 @@
                 <button class="refresh-btn" id="sx-refresh-btn" onclick="prodDashboard.fetchFromSheet()">
                     <span>🔄 Cập nhật Dữ Liệu</span>
                 </button>
+            </div>
+
+            <div class="quick-filters">
+                <button onclick="prodDashboard.applyQuickRange('today')">Hôm nay</button>
+                <button onclick="prodDashboard.applyQuickRange('7days')">7 Ngày qua</button>
+                <button onclick="prodDashboard.applyQuickRange('thisMonth')">Tháng này</button>
+                <button onclick="prodDashboard.applyQuickRange('lastMonth')">Tháng trước</button>
+                <button onclick="prodDashboard.applyQuickRange('reset')">Xóa bộ lọc</button>
             </div>
 
             <div id="sx-status-message" class="status-message"></div>
@@ -209,22 +229,22 @@
         <div class="dashboard-container">
             <!-- KPI Cards -->
             <div class="kpi-row">
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Tổng Khối Lượng (M³)</div>
                     <div class="kpi-value" id="sx-kpi-khoiluong">0</div>
                     <div class="kpi-subtext" id="sx-kpi-khoiluong-sub"></div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Tổng Số Chuyến</div>
                     <div class="kpi-value" id="sx-kpi-chuyen">0</div>
                     <div class="kpi-subtext" id="sx-kpi-chuyen-sub"></div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Trạm Hoạt Động</div>
                     <div class="kpi-value" id="sx-kpi-tram">0</div>
                     <div class="kpi-subtext">Trạm sản xuất</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Xe Hoạt Động</div>
                     <div class="kpi-value" id="sx-kpi-xe">0</div>
                     <div class="kpi-subtext">Phương tiện vận chuyển</div>
@@ -233,13 +253,13 @@
 
             <!-- Charts -->
             <div class="charts-grid">
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>📈 Xu Hướng Khối Lượng Theo Ngày</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-trend"></canvas>
                     </div>
                 </div>
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>🏆 Top 10 Trạm Theo Khối Lượng</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-tram"></canvas>
@@ -248,13 +268,13 @@
             </div>
 
             <div class="charts-grid">
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>🚚 Top 10 Xe Theo Khối Lượng</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-xe"></canvas>
                     </div>
                 </div>
-                <div class="chart-card">
+                <div class="chart-card dashboard-card">
                     <h3>📊 Phân Bố Theo Sản Phẩm</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-sanpham"></canvas>
@@ -263,7 +283,7 @@
             </div>
 
             <!-- Table -->
-            <div class="table-card">
+            <div class="table-card dashboard-card">
                 <h3>📋 Chi Tiết Sản Xuất</h3>
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -291,6 +311,7 @@
         </div>
     </div>
 
+    <script src="js/utils.js"></script>
     <script src="js/sales-dashboard.js"></script>
     <script src="js/production-dashboard.js"></script>
     <script src="js/app.js"></script>

@@ -18,6 +18,7 @@ Toàn bộ hướng dẫn được chia theo từng chủ đề trong thư mục
 | [`docs/FEATURES-SANXUAT.md`](docs/FEATURES-SANXUAT.md) | Tính năng tab Sản Xuất |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Hướng dẫn thêm filter/biểu đồ/cột mới |
 | [`docs/STYLING.md`](docs/STYLING.md) | Bảng màu, biến CSS, cách đổi giao diện |
+| [`docs/UPGRADE-IDEAS.md`](docs/UPGRADE-IDEAS.md) | Đề xuất nâng cấp UI đã đánh giá + checklist triển khai |
 
 ---
 

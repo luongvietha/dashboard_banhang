@@ -10,5 +10,6 @@ function switchView(view) {
     }
 }
 
+applyChartDefaults();
 const dashboard = new Dashboard();
 const prodDashboard = new ProductionDashboard();

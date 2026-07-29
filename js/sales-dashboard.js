@@ -198,7 +198,7 @@ class Dashboard {
         document.getElementById('kpi-luong').textContent = luong.toFixed(1);
         document.getElementById('kpi-luong-sub').textContent = `Trung bình: ${(luong / count || 0).toFixed(1)} M³`;
 
-        document.getElementById('kpi-doanhtu').textContent = this.formatCurrency(doanhtu);
+        document.getElementById('kpi-doanhtu').textContent = formatSmartNumber(doanhtu, 'currency');
         document.getElementById('kpi-doanhtu-sub').textContent = doanhtu > 0 ? `${(doanhtu / count || 0).toFixed(0)} / đơn` : 'Chưa có giá';
 
         document.getElementById('kpi-khach').textContent = khachs.toLocaleString('vi-VN');
@@ -375,9 +375,9 @@ class Dashboard {
             html += `<td>${row.KhachHang || '-'}</td>`;
             html += `<td>${row.SanPham || '-'}</td>`;
             html += `<td>${row.XuatKho || '-'}</td>`;
-            html += `<td>${row.SoLuong ? row.SoLuong.toFixed(1) : '-'}</td>`;
-            html += `<td>${row.LoaiDonHang || '-'}</td>`;
-            html += `<td>${row.ThanhTien > 0 ? this.formatCurrency(row.ThanhTien) : '-'}</td>`;
+            html += `<td>${row.SoLuong ? formatSmartNumber(row.SoLuong, 'volume') : '-'}</td>`;
+            html += `<td>${row.LoaiDonHang ? `<span class="badge ${row.LoaiDonHang === 'Hợp Đồng' ? 'badge-info' : 'badge-success'}">${row.LoaiDonHang}</span>` : '-'}</td>`;
+            html += `<td>${row.ThanhTien > 0 ? formatSmartNumber(row.ThanhTien, 'currency') : '-'}</td>`;
             html += '</tr>';
         });
         document.getElementById('table-body').innerHTML = html;
@@ -417,9 +417,15 @@ class Dashboard {
         this.renderTable();
     }
 
-    formatCurrency(value) {
-        if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-        if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
-        return value.toFixed(0);
+    // Bộ lọc nhanh: 'today' | '7days' | 'thisMonth' | 'lastMonth' | 'reset'
+    applyQuickRange(preset) {
+        if (preset === 'reset') {
+            this.setDefaultDates();
+        } else {
+            const range = getQuickRange(preset);
+            document.getElementById('filter-start').value = range.start;
+            document.getElementById('filter-end').value = range.end;
+        }
+        this.onFilterChange();
     }
 }

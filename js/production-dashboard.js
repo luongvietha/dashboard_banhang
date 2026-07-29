@@ -341,7 +341,7 @@ class ProductionDashboard {
             html += `<td>${row.TenSanPham || '-'}</td>`;
             html += `<td>${row.BienSoXe || '-'}</td>`;
             html += `<td>${row.SoChuyen || '-'}</td>`;
-            html += `<td>${row.TongKhoiLuong ? row.TongKhoiLuong.toFixed(1) : '-'}</td>`;
+            html += `<td>${row.TongKhoiLuong ? formatSmartNumber(row.TongKhoiLuong, 'volume') : '-'}</td>`;
             html += `<td>${row.GhiChu || '-'}</td>`;
             html += '</tr>';
         });
@@ -380,5 +380,17 @@ class ProductionDashboard {
     goPage(page) {
         this.currentPage = page;
         this.renderTable();
+    }
+
+    // Bộ lọc nhanh: 'today' | '7days' | 'thisMonth' | 'lastMonth' | 'reset'
+    applyQuickRange(preset) {
+        if (preset === 'reset') {
+            this.setDefaultDates();
+        } else {
+            const range = getQuickRange(preset);
+            document.getElementById('sx-filter-start').value = range.start;
+            document.getElementById('sx-filter-end').value = range.end;
+        }
+        this.onFilterChange();
     }
 }
