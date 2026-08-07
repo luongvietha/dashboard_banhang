@@ -66,3 +66,104 @@ function getQuickRange(preset) {
     }
     return null; // 'reset' → xử lý riêng ở nơi gọi (set về min/max của rawData)
 }
+
+// ---- Multi-select dạng dropdown checkbox (dùng khi cần chọn nhiều giá trị cho 1 bộ lọc) ----
+// Cách dùng:
+//   const ms = new MultiSelect('container-id', { allLabel: 'Tất cả trạm', onChange: () => ... });
+//   ms.setOptions(['A', 'B', 'C']);   // gọi lại mỗi khi danh sách lựa chọn hợp lệ thay đổi (lọc chéo)
+//   ms.getSelected();                 // [] nghĩa là "tất cả" (không lọc), ngược lại là mảng giá trị đã chọn
+class MultiSelect {
+    constructor(containerId, { allLabel = 'Tất cả', onChange = null } = {}) {
+        this.container = document.getElementById(containerId);
+        this.allLabel = allLabel;
+        this.onChange = onChange;
+        this.options = [];
+        this.selected = new Set(); // rỗng = chọn tất cả
+        this.isOpen = false;
+        if (!this.container) return;
+        this.container.classList.add('multiselect');
+        this.container.innerHTML = `
+            <button type="button" class="multiselect-btn"></button>
+            <div class="multiselect-list" style="display:none;"></div>
+        `;
+        this.btnEl = this.container.querySelector('.multiselect-btn');
+        this.listEl = this.container.querySelector('.multiselect-list');
+        this.btnEl.addEventListener('click', (e) => { e.stopPropagation(); this.toggle(); });
+        document.addEventListener('click', (e) => {
+            if (this.isOpen && !this.container.contains(e.target)) this.close();
+        });
+        this.renderButton();
+    }
+
+    // Cập nhật danh sách lựa chọn hợp lệ (vd sau khi các bộ lọc khác thay đổi) — tự bỏ các giá trị
+    // đã chọn trước đó nhưng nay không còn hợp lệ, để "gọn" danh sách hiển thị như tab Bán Hàng.
+    setOptions(options) {
+        this.options = options;
+        this.selected = new Set([...this.selected].filter(v => options.includes(v)));
+        this.renderButton();
+        if (this.isOpen) this.renderList();
+    }
+
+    getSelected() {
+        return [...this.selected];
+    }
+
+    toggle() { this.isOpen ? this.close() : this.openList(); }
+
+    openList() {
+        this.isOpen = true;
+        this.renderList();
+        this.listEl.style.display = 'block';
+    }
+
+    close() {
+        this.isOpen = false;
+        if (this.listEl) this.listEl.style.display = 'none';
+    }
+
+    renderButton() {
+        if (!this.btnEl) return;
+        if (this.selected.size === 0) this.btnEl.textContent = this.allLabel;
+        else if (this.selected.size === 1) this.btnEl.textContent = [...this.selected][0];
+        else this.btnEl.textContent = `${this.selected.size} đã chọn`;
+    }
+
+    renderList() {
+        if (!this.listEl) return;
+        let html = `<div class="multiselect-actions">
+            <button type="button" data-act="all">Chọn tất cả</button>
+            <button type="button" data-act="none">Bỏ chọn</button>
+        </div>`;
+        if (this.options.length === 0) {
+            html += `<div class="multiselect-empty">Không có lựa chọn phù hợp</div>`;
+        } else {
+            html += this.options.map(opt => `
+                <label class="multiselect-item">
+                    <input type="checkbox" value="${opt}" ${this.selected.has(opt) ? 'checked' : ''}>
+                    <span>${opt}</span>
+                </label>
+            `).join('');
+        }
+        this.listEl.innerHTML = html;
+
+        this.listEl.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked) this.selected.add(cb.value); else this.selected.delete(cb.value);
+                this.renderButton();
+                if (this.onChange) this.onChange();
+            });
+        });
+        const btnAll = this.listEl.querySelector('[data-act="all"]');
+        const btnNone = this.listEl.querySelector('[data-act="none"]');
+        if (btnAll) btnAll.addEventListener('click', () => {
+            this.options.forEach(o => this.selected.add(o));
+            this.renderList(); this.renderButton();
+            if (this.onChange) this.onChange();
+        });
+        if (btnNone) btnNone.addEventListener('click', () => {
+            this.selected.clear();
+            this.renderList(); this.renderButton();
+            if (this.onChange) this.onChange();
+        });
+    }
+}

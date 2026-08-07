@@ -342,22 +342,16 @@
                         <input type="date" id="tp-filter-end" onchange="finishedProductsDashboard.onFilterChange()">
                     </div>
                     <div class="filter-group">
-                        <label for="tp-filter-tram">Trạm</label>
-                        <select id="tp-filter-tram" onchange="finishedProductsDashboard.onFilterChange()">
-                            <option value="all">Tất cả trạm</option>
-                        </select>
+                        <label>Trạm</label>
+                        <div id="tp-filter-tram"></div>
                     </div>
                     <div class="filter-group">
-                        <label for="tp-filter-spra">SP Đầu Ra</label>
-                        <select id="tp-filter-spra" onchange="finishedProductsDashboard.onFilterChange()">
-                            <option value="all">Tất cả</option>
-                        </select>
+                        <label>SP Đầu Ra</label>
+                        <div id="tp-filter-spra"></div>
                     </div>
                     <div class="filter-group">
-                        <label for="tp-filter-spvao">SP Đầu Vào</label>
-                        <select id="tp-filter-spvao" onchange="finishedProductsDashboard.onFilterChange()">
-                            <option value="all">Tất cả</option>
-                        </select>
+                        <label>SP Đầu Vào</label>
+                        <div id="tp-filter-spvao"></div>
                     </div>
                 </div>
 
@@ -370,6 +364,11 @@
                         <div class="kpi-label">Tổng Đầu Ra (M³)</div>
                         <div class="kpi-value" id="tp-kpi-ra">0</div>
                         <div class="kpi-subtext">Gồm cả sản phẩm đá và cát</div>
+                    </div>
+                    <div class="kpi-card dashboard-card">
+                        <div class="kpi-label">Sản Lượng TB/Ngày (M³)</div>
+                        <div class="kpi-value" id="tp-kpi-tbngay">0</div>
+                        <div class="kpi-subtext" id="tp-kpi-tbngay-sub"></div>
                     </div>
                     <div class="kpi-card dashboard-card">
                         <div class="kpi-label">Trạm Hoạt Động</div>

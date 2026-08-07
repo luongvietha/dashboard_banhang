@@ -13,6 +13,9 @@ class FinishedProductsDashboard {
         this.inputRows = [];     // nổ ra theo từng nguyên liệu: {ngayISO, tenTram, loaiTram, maNguyenLieu, khoiLuong}
         this.stationProducts = {}; // tenTram -> { loaiTram, products: Set }
         this.charts = {};
+        this.msTram = null;      // MultiSelect — Trạm (xem js/utils.js)
+        this.msSpRa = null;      // MultiSelect — Sản phẩm đầu ra
+        this.msSpVao = null;     // MultiSelect — Sản phẩm đầu vào
         this.loaded = false;
     }
 
@@ -43,7 +46,7 @@ class FinishedProductsDashboard {
             this.buildStationProducts();
             this.renderStationProductsTable();
             this.setDefaultDates();
-            this.populateFilterOptions();
+            this.initFilters();
             this.loaded = true;
             this.applyFilters();
         } catch (error) {
@@ -149,33 +152,24 @@ class FinishedProductsDashboard {
         endEl.value = dates[dates.length - 1] || '';
     }
 
-    populateFilterOptions() {
-        const populate = (id, values, allLabel) => {
-            const select = document.getElementById(id);
-            if (!select) return;
-            select.innerHTML = `<option value="all">${allLabel}</option>`;
-            values.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v; opt.textContent = v;
-                select.appendChild(opt);
-            });
-        };
-        populate('tp-filter-tram', [...new Set(this.lots.map(l => l.tenTram))].sort(), 'Tất cả trạm');
-        populate('tp-filter-spra', [...new Set(this.outputRows.map(r => r.maSanPham))].sort(), 'Tất cả');
-        populate('tp-filter-spvao', [...new Set(this.inputRows.map(r => r.maNguyenLieu))].sort(), 'Tất cả');
+    // Khởi tạo 3 ô multi-select (chỉ 1 lần khi có dữ liệu) rồi dựng danh sách lựa chọn ban đầu
+    initFilters() {
+        if (!this.msTram) {
+            this.msTram = new MultiSelect('tp-filter-tram', { allLabel: 'Tất cả trạm', onChange: () => this.onFilterChange() });
+        }
+        if (!this.msSpRa) {
+            this.msSpRa = new MultiSelect('tp-filter-spra', { allLabel: 'Tất cả', onChange: () => this.onFilterChange() });
+        }
+        if (!this.msSpVao) {
+            this.msSpVao = new MultiSelect('tp-filter-spvao', { allLabel: 'Tất cả', onChange: () => this.onFilterChange() });
+        }
+        this.updateFacetOptions();
     }
 
-    onFilterChange() {
-        this.applyFilters();
-    }
-
-    getFilters() {
+    getDateRange() {
         return {
             start: document.getElementById('tp-filter-start').value,
-            end: document.getElementById('tp-filter-end').value,
-            tram: document.getElementById('tp-filter-tram').value,
-            spRa: document.getElementById('tp-filter-spra').value,
-            spVao: document.getElementById('tp-filter-spvao').value
+            end: document.getElementById('tp-filter-end').value
         };
     }
 
@@ -185,16 +179,49 @@ class FinishedProductsDashboard {
         return true;
     }
 
+    matchSel(ms, val) {
+        const sel = ms ? ms.getSelected() : [];
+        return sel.length === 0 || sel.includes(val);
+    }
+
+    // Lọc chéo (faceted): mỗi ô multi-select chỉ hiện các giá trị còn khớp với 2 bộ lọc kia + khoảng
+    // ngày đang chọn — giống cơ chế bên tab Bán Hàng, giúp danh sách luôn gọn thay vì liệt kê hết.
+    updateFacetOptions() {
+        const f = this.getDateRange();
+
+        // Trạm: trạm nào còn xuất hiện trong output (theo SP Đầu Ra đang chọn) hoặc input (theo SP Đầu Vào đang chọn)
+        const tramFromOut = this.outputRows.filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msSpRa, r.maSanPham)).map(r => r.tenTram);
+        const tramFromIn = this.inputRows.filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msSpVao, r.maNguyenLieu)).map(r => r.tenTram);
+        this.msTram.setOptions([...new Set([...tramFromOut, ...tramFromIn])].sort());
+
+        // SP Đầu Ra: mã sản phẩm còn xuất hiện ở trạm đang chọn, trong khoảng ngày đang chọn
+        const spRaOptions = this.outputRows
+            .filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msTram, r.tenTram))
+            .map(r => r.maSanPham);
+        this.msSpRa.setOptions([...new Set(spRaOptions)].sort());
+
+        // SP Đầu Vào: mã nguyên liệu còn xuất hiện ở trạm đang chọn, trong khoảng ngày đang chọn
+        const spVaoOptions = this.inputRows
+            .filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msTram, r.tenTram))
+            .map(r => r.maNguyenLieu);
+        this.msSpVao.setOptions([...new Set(spVaoOptions)].sort());
+    }
+
+    onFilterChange() {
+        this.updateFacetOptions();
+        this.applyFilters();
+    }
+
     applyFilters() {
-        const f = this.getFilters();
+        const f = this.getDateRange();
 
         // Lô trong khoảng ngày + trạm đã chọn (dùng cho KPI số lượt, và cho bảng năng lực — LUÔN tính
         // trên toàn bộ lô, không phụ thuộc bộ lọc SP Đầu ra/Đầu vào, để hiệu suất phản ánh đúng tỉ lệ quy đổi thật).
-        this.filteredLots = this.lots.filter(l => this.inRange(l.ngayISO, f) && (f.tram === 'all' || l.tenTram === f.tram));
+        this.filteredLots = this.lots.filter(l => this.inRange(l.ngayISO, f) && this.matchSel(this.msTram, l.tenTram));
 
         // Output/Input đã áp thêm bộ lọc sản phẩm tương ứng — dùng cho KPI vào/ra, chart biến thiên, chart tỷ trọng
-        this.filteredOutputRows = this.outputRows.filter(r => this.inRange(r.ngayISO, f) && (f.tram === 'all' || r.tenTram === f.tram) && (f.spRa === 'all' || r.maSanPham === f.spRa));
-        this.filteredInputRows = this.inputRows.filter(r => this.inRange(r.ngayISO, f) && (f.tram === 'all' || r.tenTram === f.tram) && (f.spVao === 'all' || r.maNguyenLieu === f.spVao));
+        this.filteredOutputRows = this.outputRows.filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msTram, r.tenTram) && this.matchSel(this.msSpRa, r.maSanPham));
+        this.filteredInputRows = this.inputRows.filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msTram, r.tenTram) && this.matchSel(this.msSpVao, r.maNguyenLieu));
 
         this.renderKPIs();
         this.renderTrendCharts();
@@ -207,8 +234,15 @@ class FinishedProductsDashboard {
         const tongRa = this.filteredOutputRows.reduce((s, r) => s + r.khoiLuong, 0);
         const trams = new Set(this.filteredLots.map(l => l.tenTram)).size;
 
+        // Sản lượng TB/ngày = tổng đầu ra ÷ số ngày THỰC SỰ có sản lượng ra trong khoảng đã lọc
+        // (không chia cho tổng số ngày lịch, vì trạm không hoạt động liên tục mọi ngày).
+        const ngayCoSanLuong = new Set(this.filteredOutputRows.filter(r => r.khoiLuong > 0).map(r => r.ngayISO));
+        const tbSanLuongNgay = ngayCoSanLuong.size > 0 ? tongRa / ngayCoSanLuong.size : 0;
+
         document.getElementById('tp-kpi-vao').textContent = formatSmartNumber(tongVao, 'volume');
         document.getElementById('tp-kpi-ra').textContent = formatSmartNumber(tongRa, 'volume');
+        document.getElementById('tp-kpi-tbngay').textContent = formatSmartNumber(tbSanLuongNgay, 'volume');
+        document.getElementById('tp-kpi-tbngay-sub').textContent = `Trên ${ngayCoSanLuong.size} ngày có sản xuất`;
         document.getElementById('tp-kpi-tram').textContent = trams;
         document.getElementById('tp-kpi-luot').textContent = this.filteredLots.length.toLocaleString('vi-VN');
     }

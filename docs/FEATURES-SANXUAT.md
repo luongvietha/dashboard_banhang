@@ -76,16 +76,16 @@ Cả 2 sheet ở dạng **"rộng"** (nhiều cặp cột Mã/KL trên 1 dòng).
 
 Bảng "🧱 Trạm Sản Xuất Ra Sản Phẩm Gì?" liệt kê mọi mã sản phẩm từng xuất hiện ở mỗi trạm (kể cả ngày sản lượng = 0). Dựng tự động từ dữ liệu (`buildStationProducts()`), không hard-code.
 
-## Bộ lọc
-
-5 bộ lọc, áp dụng đồng thời (không lọc chéo — danh sách option cố định từ toàn bộ dữ liệu):
+## Bộ lọc — multi-select + lọc chéo
 
 - **Từ ngày / Đến ngày** — mặc định = toàn bộ khoảng có dữ liệu
-- **Trạm**
-- **SP Đầu Ra** — lọc theo mã sản phẩm ra (D12, D24, MB, MS, CPT1, C1, C3)
-- **SP Đầu Vào** — lọc theo mã nguyên liệu vào (DHH, CPT1, MB, MS, DTP...) — chủ yếu hữu ích cho trạm cát vì trạm đá luôn chỉ nhận 1 loại nguyên liệu (DHH)
+- **Trạm**, **SP Đầu Ra**, **SP Đầu Vào** — dạng **multi-select** (dropdown checkbox, component `MultiSelect` dùng chung trong [`js/utils.js`](../js/utils.js)), cho phép chọn nhiều giá trị cùng lúc thay vì chỉ 1. Không chọn gì = hiểu là "tất cả".
 
-**Lưu ý quan trọng:** bộ lọc SP Đầu Ra chỉ ảnh hưởng đến số liệu/biểu đồ **đầu ra**, bộ lọc SP Đầu Vào chỉ ảnh hưởng số liệu/biểu đồ **đầu vào** — hai chiều lọc độc lập. Riêng **bảng Năng Lực Sản Xuất luôn tính trên toàn bộ lô** (không áp 2 bộ lọc sản phẩm này), để hiệu suất phản ánh đúng tỉ lệ quy đổi thật của cả trạm thay vì bị méo do chỉ xem 1 sản phẩm con.
+Nút bấm hiện "Tất cả trạm" khi chưa chọn gì, hiện thẳng tên khi chọn đúng 1 giá trị, hoặc "N đã chọn" khi chọn nhiều. Trong danh sách sổ xuống có nút "Chọn tất cả" / "Bỏ chọn" để thao tác nhanh.
+
+**Lọc chéo (giống tab Bán Hàng):** `updateFacetOptions()` tính lại danh sách lựa chọn hợp lệ cho từng ô mỗi khi 1 trong 3 ô (hoặc khoảng ngày) thay đổi — vd chọn trước 1 Trạm thì SP Đầu Ra/Đầu Vào chỉ còn hiện các mã từng xuất hiện ở trạm đó trong khoảng ngày đang lọc, danh sách gọn lại thay vì liệt kê hết mọi mã trong toàn bộ dữ liệu. Giá trị đã chọn trước đó nhưng không còn hợp lệ sẽ tự bị bỏ (`MultiSelect.setOptions()`).
+
+**Lưu ý:** bộ lọc SP Đầu Ra chỉ ảnh hưởng số liệu/biểu đồ **đầu ra**, bộ lọc SP Đầu Vào chỉ ảnh hưởng số liệu/biểu đồ **đầu vào** — hai chiều lọc độc lập. Riêng **bảng Năng Lực Sản Xuất luôn tính trên toàn bộ lô** (không áp 2 bộ lọc sản phẩm này), để hiệu suất phản ánh đúng tỉ lệ quy đổi thật của cả trạm thay vì bị méo do chỉ xem 1 sản phẩm con.
 
 ## KPI Cards
 
@@ -93,6 +93,7 @@ Bảng "🧱 Trạm Sản Xuất Ra Sản Phẩm Gì?" liệt kê mọi mã sả
 |------|----------|
 | Tổng Đầu Vào (M³) | Tổng `inputRows` đã lọc |
 | Tổng Đầu Ra (M³) | Tổng `outputRows` đã lọc — **gồm cả sản phẩm đá và cát cộng chung**, khắc phục lỗi thiếu đầu ra cát ở cách tính cũ |
+| Sản Lượng TB/Ngày (M³) | Tổng đầu ra đã lọc ÷ số ngày **thực sự có sản lượng ra** trong khoảng lọc (không chia cho tổng số ngày lịch, vì trạm không chạy liên tục mọi ngày) — kèm chú thích số ngày dùng để tính |
 | Trạm Hoạt Động | Số trạm có lô trong khoảng lọc |
 | Số Lượt Sản Xuất | Số lô (`this.filteredLots.length`) |
 

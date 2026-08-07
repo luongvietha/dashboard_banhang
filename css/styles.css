@@ -26,3 +26,17 @@
 .quick-filters button{padding:6px 14px;border:1px solid var(--border-color);background:white;border-radius:9999px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;}
 .quick-filters button:hover{background:var(--primary);color:white;border-color:var(--primary);}
 
+/* ===== Multi-select dropdown (checkbox list) ===== */
+.multiselect{position:relative;min-width:170px;}
+.multiselect-btn{width:100%;text-align:left;padding:8px 12px;border:1px solid var(--border-color);border-radius:4px;font-size:13px;background:white;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:border-color 0.2s;}
+.multiselect-btn:hover{border-color:var(--primary);}
+.multiselect-btn::after{content:'▾';float:right;color:var(--text-muted);margin-left:6px;}
+.multiselect-list{position:absolute;top:calc(100% + 4px);left:0;z-index:50;min-width:230px;max-height:280px;overflow-y:auto;background:white;border:1px solid var(--border-color);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.14);padding:6px;}
+.multiselect-actions{display:flex;gap:6px;padding:2px 4px 8px;border-bottom:1px solid var(--border-color);margin-bottom:4px;}
+.multiselect-actions button{flex:1;padding:5px 8px;font-size:11px;font-weight:600;border:1px solid var(--border-color);background:#f8f9fa;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.multiselect-actions button:hover{background:var(--primary);color:white;border-color:var(--primary);}
+.multiselect-item{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:13px;border-radius:4px;cursor:pointer;}
+.multiselect-item:hover{background:#f8f9fa;}
+.multiselect-item input{cursor:pointer;}
+.multiselect-empty{padding:10px;font-size:12px;color:var(--text-muted);text-align:center;}
+
