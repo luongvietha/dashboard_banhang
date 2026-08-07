@@ -53,22 +53,28 @@ class ProductionDashboard {
                 const kDate = this.findKey(keys, ['NGÀY']);
                 const kTenTram = this.findKey(keys, ['TÊN', 'TRẠM']);
                 const kTenSP = this.findKey(keys, ['SẢN PHẨM']);
+                const kCa = this.findKey(keys, ['CA']);
                 const kXe = this.findKey(keys, ['BIỂN', 'XE']);
                 const kChuyen = this.findKey(keys, ['SỐ CHUYẾN']);
                 const kTongKL = this.findKey(keys, ['TỔNG', 'KHỐI']);
                 const kGhiChu = this.findKey(keys, ['GHI CHÚ']);
 
-                this.rawData = results.data.map(row => ({
-                    NgayGoc: row[kDate],
-                    TenTram: row[kTenTram],
-                    TenSanPham: row[kTenSP],
-                    BienSoXe: row[kXe],
-                    SoChuyen: parseInt(row[kChuyen]) || 0,
-                    TongKhoiLuong: this.parseVNNumber(row[kTongKL]),
-                    GhiChu: row[kGhiChu],
-                    date: this.extractDate(row[kDate]),
-                    thang: this.extractMonth(row[kDate])
-                })).filter(r => r.NgayGoc);
+                this.rawData = results.data.map(row => {
+                    const tenSPRaw = row[kTenSP] || '';
+                    return {
+                        NgayGoc: row[kDate],
+                        TenTram: row[kTenTram],
+                        TenSanPham: this.cleanProductName(tenSPRaw),
+                        LoaiKho: this.classifyKho(tenSPRaw),
+                        Ca: this.normalizeCa(row[kCa]),
+                        BienSoXe: row[kXe],
+                        SoChuyen: parseInt(row[kChuyen]) || 0,
+                        TongKhoiLuong: this.parseVNNumber(row[kTongKL]),
+                        GhiChu: row[kGhiChu],
+                        date: this.extractDate(row[kDate]),
+                        thang: this.extractMonth(row[kDate])
+                    };
+                }).filter(r => r.NgayGoc);
 
                 this.setDefaultDates();
                 this.updateFilterOptions();
@@ -81,6 +87,44 @@ class ProductionDashboard {
         });
     }
 
+    // Bỏ hậu tố "(kho: NK)" / "(kho: TP)" khỏi tên sản phẩm để hiển thị gọn hơn
+    cleanProductName(str) {
+        if (!str) return '';
+        return String(str).replace(/\s*\(kho:[^)]*\)/i, '').trim();
+    }
+
+    // Phân loại Đầu vào (NK = nhập kho nguyên liệu) / Đầu ra (TP = thành phẩm) dựa vào hậu tố "(kho: ..)"
+    // trong cột Tên Sản Phẩm. Không có hậu tố (vd "Đất tầng phủ") → xếp loại "Khác".
+    classifyKho(str) {
+        if (!str) return 'Khác';
+        const m = String(str).match(/\(kho:\s*([^)]+)\)/i);
+        if (!m) return 'Khác';
+        const tag = m[1].trim().toUpperCase();
+        if (tag === 'NK') return 'Đầu vào';
+        if (tag === 'TP') return 'Đầu ra';
+        return 'Khác';
+    }
+
+    // Cột "Ca" trong Sheet nhập tay nên có nhiều biến thể ("Ca 1 ( 7h00 - 16h30)", "Ca 1 từ 7h-16h30"...).
+    // Chuẩn hoá về 5 ca cố định theo số/nhãn đứng đầu chuỗi. ~64% số dòng chưa được nhập Ca (để trống trong Sheet gốc) → "Không rõ ca".
+    normalizeCa(str) {
+        const s = String(str || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        if (!s) return 'Không rõ ca';
+        if (s.startsWith('ca 1')) return 'Ca 1 (Sáng)';
+        if (s.startsWith('ca 2')) return 'Ca 2 (Đêm)';
+        if (s.startsWith('ca 3')) return 'Ca 3';
+        if (s.startsWith('hành chính')) return 'Hành chính';
+        if (s.startsWith('tăng ca')) return 'Tăng ca';
+        return String(str).trim(); // giá trị lạ, giữ nguyên để không mất dữ liệu
+    }
+
+    // Thứ tự hiển thị cố định cho các ca (thay vì sắp xếp theo alphabet)
+    caSortOrder(ca) {
+        const order = ['Ca 1 (Sáng)', 'Ca 2 (Đêm)', 'Ca 3', 'Hành chính', 'Tăng ca', 'Không rõ ca'];
+        const idx = order.indexOf(ca);
+        return idx === -1 ? order.length : idx;
+    }
+
     // Số kiểu Việt Nam dùng dấu phẩy thập phân, vd "310,0" → 310.0
     parseVNNumber(str) {
         if (!str) return 0;
@@ -91,14 +135,20 @@ class ProductionDashboard {
     extractDate(timeStr) {
         if (!timeStr) return '';
         const parts = timeStr.split(' ')[0].split('/');
-        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        if (parts.length === 3) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${parts[2]}-${pad(parts[1])}-${pad(parts[0])}`;
+        }
         return timeStr;
     }
 
     extractMonth(timeStr) {
         if (!timeStr) return '';
         const parts = timeStr.split(' ')[0].split('/');
-        if (parts.length === 3) return `${parts[2]}-${parts[1]}`;
+        if (parts.length === 3) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${parts[2]}-${pad(parts[1])}`;
+        }
         return timeStr;
     }
 
@@ -124,6 +174,7 @@ class ProductionDashboard {
         const tram = document.getElementById('sx-filter-tram').value;
         const sanpham = document.getElementById('sx-filter-sanpham').value;
         const xe = document.getElementById('sx-filter-xe').value;
+        const ca = document.getElementById('sx-filter-ca').value;
 
         return this.rawData.filter(row => {
             if (startDate && row.date < startDate) return false;
@@ -132,6 +183,7 @@ class ProductionDashboard {
             if (!excludeKeys.includes('tram') && tram !== 'all' && row.TenTram !== tram) return false;
             if (!excludeKeys.includes('sanpham') && sanpham !== 'all' && row.TenSanPham !== sanpham) return false;
             if (!excludeKeys.includes('xe') && xe !== 'all' && row.BienSoXe !== xe) return false;
+            if (!excludeKeys.includes('ca') && ca !== 'all' && row.Ca !== ca) return false;
             return true;
         });
     }
@@ -162,6 +214,9 @@ class ProductionDashboard {
         this.populateSelect('sx-filter-xe',
             [...new Set(this.getFilteredData(['xe']).map(d => d.BienSoXe).filter(d => d))].sort(),
             'Tất cả xe');
+        this.populateSelect('sx-filter-ca',
+            [...new Set(this.getFilteredData(['ca']).map(d => d.Ca).filter(d => d))].sort((a, b) => this.caSortOrder(a) - this.caSortOrder(b)),
+            'Tất cả ca');
     }
 
     onFilterChange() {
@@ -174,35 +229,42 @@ class ProductionDashboard {
         this.currentPage = 0;
         this.renderKPIs();
         this.renderCharts();
+        this.renderCapacityTable();
         this.renderTable();
     }
 
     renderKPIs() {
-        const khoiluong = this.filteredData.reduce((s, r) => s + r.TongKhoiLuong, 0);
+        const inputRows = this.filteredData.filter(r => r.LoaiKho === 'Đầu vào');
+        const outputRows = this.filteredData.filter(r => r.LoaiKho === 'Đầu ra');
+        const tongVao = inputRows.reduce((s, r) => s + r.TongKhoiLuong, 0);
+        const tongRa = outputRows.reduce((s, r) => s + r.TongKhoiLuong, 0);
+        const hieuSuat = tongVao > 0 ? (tongRa / tongVao * 100) : 0;
         const chuyen = this.filteredData.reduce((s, r) => s + r.SoChuyen, 0);
         const trams = [...new Set(this.filteredData.map(d => d.TenTram).filter(d => d))].length;
-        const xes = [...new Set(this.filteredData.map(d => d.BienSoXe).filter(d => d))].length;
 
-        document.getElementById('sx-kpi-khoiluong').textContent = khoiluong.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
-        document.getElementById('sx-kpi-khoiluong-sub').textContent = `${this.rawData.length > 0 ? (this.filteredData.length / this.rawData.length * 100).toFixed(0) : 0}% của tổng`;
+        document.getElementById('sx-kpi-khoiluong-vao').textContent = formatSmartNumber(tongVao, 'volume');
+        document.getElementById('sx-kpi-khoiluong-ra').textContent = formatSmartNumber(tongRa, 'volume');
+        document.getElementById('sx-kpi-hieusuat').textContent = tongVao > 0 ? hieuSuat.toFixed(1) + '%' : '--';
+        document.getElementById('sx-kpi-hieusuat-sub').textContent = 'Đầu ra / Đầu vào';
 
         document.getElementById('sx-kpi-chuyen').textContent = chuyen.toLocaleString('vi-VN');
-        document.getElementById('sx-kpi-chuyen-sub').textContent = `TB: ${(khoiluong / chuyen || 0).toFixed(1)} m³/chuyến`;
+        document.getElementById('sx-kpi-chuyen-sub').textContent = `TB: ${(tongRa / chuyen || 0).toFixed(1)} m³/chuyến`;
 
         document.getElementById('sx-kpi-tram').textContent = trams;
-        document.getElementById('sx-kpi-xe').textContent = xes;
     }
 
     renderCharts() {
         const colors = ['#2D7A3E', '#4CAF50', '#81C784', '#A5D6A7', '#C8E6C9', '#66BB6A', '#43A047', '#FFA726', '#EF5350', '#AB47BC'];
+        const colorVao = '#42A5F5';
+        const colorRa = '#2D7A3E';
 
-        // Xu hướng theo ngày
-        const trendData = {};
+        // ---- 1. Xu hướng Đầu Vào / Đầu Ra theo ngày ----
+        const trendVao = {}, trendRa = {};
         this.filteredData.forEach(row => {
-            if (!trendData[row.date]) trendData[row.date] = 0;
-            trendData[row.date] += row.TongKhoiLuong;
+            if (row.LoaiKho === 'Đầu vào') trendVao[row.date] = (trendVao[row.date] || 0) + row.TongKhoiLuong;
+            if (row.LoaiKho === 'Đầu ra') trendRa[row.date] = (trendRa[row.date] || 0) + row.TongKhoiLuong;
         });
-        const sortedDates = Object.keys(trendData).sort();
+        const sortedDates = [...new Set([...Object.keys(trendVao), ...Object.keys(trendRa)])].sort();
 
         const ctx1 = document.getElementById('sx-chart-trend').getContext('2d');
         if (this.charts.trend) this.charts.trend.destroy();
@@ -210,92 +272,93 @@ class ProductionDashboard {
             type: 'line',
             data: {
                 labels: sortedDates,
-                datasets: [{
-                    label: 'Khối lượng (m³)',
-                    data: sortedDates.map(d => trendData[d]),
-                    borderColor: colors[0],
-                    backgroundColor: colors[0] + '15',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4
-                }]
+                datasets: [
+                    {
+                        label: 'Đầu vào (m³)',
+                        data: sortedDates.map(d => trendVao[d] || 0),
+                        borderColor: colorVao,
+                        backgroundColor: colorVao + '15',
+                        borderWidth: 3, fill: true, tension: 0.4, pointRadius: 3
+                    },
+                    {
+                        label: 'Đầu ra (m³)',
+                        data: sortedDates.map(d => trendRa[d] || 0),
+                        borderColor: colorRa,
+                        backgroundColor: colorRa + '15',
+                        borderWidth: 3, fill: true, tension: 0.4, pointRadius: 3
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { legend: { display: true, position: 'bottom' } },
                 scales: { y: { beginAtZero: true, title: { display: true, text: 'Khối lượng (m³)' } } }
             }
         });
 
-        // Top trạm
-        const tramGroups = {};
+        // ---- 2. Đầu Vào vs Đầu Ra theo Trạm ----
+        const tramVao = {}, tramRa = {};
         this.filteredData.forEach(row => {
             if (!row.TenTram) return;
-            if (!tramGroups[row.TenTram]) tramGroups[row.TenTram] = 0;
-            tramGroups[row.TenTram] += row.TongKhoiLuong;
+            if (row.LoaiKho === 'Đầu vào') tramVao[row.TenTram] = (tramVao[row.TenTram] || 0) + row.TongKhoiLuong;
+            if (row.LoaiKho === 'Đầu ra') tramRa[row.TenTram] = (tramRa[row.TenTram] || 0) + row.TongKhoiLuong;
         });
-        const topTram = Object.entries(tramGroups).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const allTrams = [...new Set([...Object.keys(tramVao), ...Object.keys(tramRa)])]
+            .sort((a, b) => ((tramVao[b] || 0) + (tramRa[b] || 0)) - ((tramVao[a] || 0) + (tramRa[a] || 0)));
 
         const ctx2 = document.getElementById('sx-chart-tram').getContext('2d');
         if (this.charts.tram) this.charts.tram.destroy();
         this.charts.tram = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: topTram.map(x => x[0]),
-                datasets: [{
-                    label: 'Khối lượng (m³)',
-                    data: topTram.map(x => x[1]),
-                    backgroundColor: colors.map(c => c + 'CC'),
-                    borderColor: colors,
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
+                labels: allTrams,
+                datasets: [
+                    { label: 'Đầu vào (m³)', data: allTrams.map(t => tramVao[t] || 0), backgroundColor: colorVao + 'CC', borderColor: colorVao, borderWidth: 1, borderRadius: 4 },
+                    { label: 'Đầu ra (m³)', data: allTrams.map(t => tramRa[t] || 0), backgroundColor: colorRa + 'CC', borderColor: colorRa, borderWidth: 1, borderRadius: 4 }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 indexAxis: 'y',
-                plugins: { legend: { display: false } },
+                plugins: { legend: { display: true, position: 'bottom' } },
                 scales: { x: { beginAtZero: true } }
             }
         });
 
-        // Top xe
-        const xeGroups = {};
+        // ---- 3. Khối lượng theo Ca làm việc (chồng Đầu vào / Đầu ra) ----
+        const caList = [...new Set(this.filteredData.map(r => r.Ca).filter(c => c))].sort((a, b) => this.caSortOrder(a) - this.caSortOrder(b));
+        const caVao = {}, caRa = {};
         this.filteredData.forEach(row => {
-            if (!row.BienSoXe) return;
-            if (!xeGroups[row.BienSoXe]) xeGroups[row.BienSoXe] = 0;
-            xeGroups[row.BienSoXe] += row.TongKhoiLuong;
+            if (!row.Ca) return;
+            if (row.LoaiKho === 'Đầu vào') caVao[row.Ca] = (caVao[row.Ca] || 0) + row.TongKhoiLuong;
+            if (row.LoaiKho === 'Đầu ra') caRa[row.Ca] = (caRa[row.Ca] || 0) + row.TongKhoiLuong;
         });
-        const topXe = Object.entries(xeGroups).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-        const ctx3 = document.getElementById('sx-chart-xe').getContext('2d');
-        if (this.charts.xe) this.charts.xe.destroy();
-        this.charts.xe = new Chart(ctx3, {
+        const ctx3 = document.getElementById('sx-chart-ca').getContext('2d');
+        if (this.charts.ca) this.charts.ca.destroy();
+        this.charts.ca = new Chart(ctx3, {
             type: 'bar',
             data: {
-                labels: topXe.map(x => x[0]),
-                datasets: [{
-                    label: 'Khối lượng (m³)',
-                    data: topXe.map(x => x[1]),
-                    backgroundColor: colors.map(c => c + 'CC'),
-                    borderColor: colors,
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
+                labels: caList,
+                datasets: [
+                    { label: 'Đầu vào (m³)', data: caList.map(c => caVao[c] || 0), backgroundColor: colorVao + 'CC', borderColor: colorVao, borderWidth: 1, borderRadius: 4, stack: 's' },
+                    { label: 'Đầu ra (m³)', data: caList.map(c => caRa[c] || 0), backgroundColor: colorRa + 'CC', borderColor: colorRa, borderWidth: 1, borderRadius: 4, stack: 's' }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: { legend: { display: false } },
-                scales: { x: { beginAtZero: true } }
+                plugins: { legend: { display: true, position: 'bottom' } },
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Khối lượng (m³)' } }
+                }
             }
         });
 
-        // Phân bố theo sản phẩm
+        // ---- 4. Phân bố theo sản phẩm ----
         const spGroups = {};
         this.filteredData.forEach(row => {
             if (!row.TenSanPham) return;
@@ -328,6 +391,51 @@ class ProductionDashboard {
         });
     }
 
+    // Năng lực sản xuất theo trạm: tổng đầu vào/ra, hiệu suất chuyển đổi, số ngày hoạt động,
+    // sản lượng đầu ra trung bình/ngày và đỉnh sản lượng/ngày quan sát được (proxy cho công suất tối đa).
+    renderCapacityTable() {
+        const body = document.getElementById('sx-capacity-body');
+        if (!body) return;
+
+        const trams = [...new Set(this.filteredData.map(r => r.TenTram).filter(t => t))];
+        const rows = trams.map(tram => {
+            const rowsOfTram = this.filteredData.filter(r => r.TenTram === tram);
+            const vao = rowsOfTram.filter(r => r.LoaiKho === 'Đầu vào');
+            const ra = rowsOfTram.filter(r => r.LoaiKho === 'Đầu ra');
+            const tongVao = vao.reduce((s, r) => s + r.TongKhoiLuong, 0);
+            const tongRa = ra.reduce((s, r) => s + r.TongKhoiLuong, 0);
+            const hieuSuat = tongVao > 0 ? (tongRa / tongVao * 100) : null;
+
+            const ngayHoatDong = new Set(rowsOfTram.filter(r => r.TongKhoiLuong > 0).map(r => r.date));
+            const soNgayHD = ngayHoatDong.size;
+            const tbRaMoiNgay = soNgayHD > 0 ? tongRa / soNgayHD : 0;
+
+            const raTheoNgay = {};
+            ra.forEach(r => { raTheoNgay[r.date] = (raTheoNgay[r.date] || 0) + r.TongKhoiLuong; });
+            const dinhRa = Object.values(raTheoNgay).reduce((max, v) => Math.max(max, v), 0);
+
+            return { tram, tongVao, tongRa, hieuSuat, soNgayHD, tbRaMoiNgay, dinhRa };
+        }).sort((a, b) => b.tongRa - a.tongRa);
+
+        body.innerHTML = rows.map(r => `
+            <tr>
+                <td>${r.tram}</td>
+                <td>${r.soNgayHD}</td>
+                <td>${formatSmartNumber(r.tongVao, 'volume')}</td>
+                <td>${formatSmartNumber(r.tongRa, 'volume')}</td>
+                <td>${r.hieuSuat === null ? '--' : r.hieuSuat.toFixed(1) + '%'}</td>
+                <td>${formatSmartNumber(r.tbRaMoiNgay, 'volume')}</td>
+                <td>${formatSmartNumber(r.dinhRa, 'volume')}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="7">Không có dữ liệu trong khoảng lọc hiện tại</td></tr>';
+    }
+
+    khoBadge(loai) {
+        if (loai === 'Đầu vào') return `<span class="badge badge-info">Đầu vào</span>`;
+        if (loai === 'Đầu ra') return `<span class="badge badge-success">Đầu ra</span>`;
+        return `<span class="badge badge-warning">Khác</span>`;
+    }
+
     renderTable() {
         const start = this.currentPage * this.pageSize;
         const end = Math.min(start + this.pageSize, this.filteredData.length);
@@ -339,6 +447,8 @@ class ProductionDashboard {
             html += `<td>${row.NgayGoc || '-'}</td>`;
             html += `<td>${row.TenTram || '-'}</td>`;
             html += `<td>${row.TenSanPham || '-'}</td>`;
+            html += `<td>${this.khoBadge(row.LoaiKho)}</td>`;
+            html += `<td>${row.Ca || '-'}</td>`;
             html += `<td>${row.BienSoXe || '-'}</td>`;
             html += `<td>${row.SoChuyen || '-'}</td>`;
             html += `<td>${row.TongKhoiLuong ? formatSmartNumber(row.TongKhoiLuong, 'volume') : '-'}</td>`;

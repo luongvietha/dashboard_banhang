@@ -8,8 +8,12 @@ function switchView(view) {
     if (view === 'sanxuat' && !prodDashboard.loaded) {
         prodDashboard.fetchFromSheet();
     }
+    if (view === 'sanxuat' && !finishedProductsDashboard.loaded) {
+        finishedProductsDashboard.fetchFromSheet();
+    }
 }
 
 applyChartDefaults();
 const dashboard = new Dashboard();
 const prodDashboard = new ProductionDashboard();
+const finishedProductsDashboard = new FinishedProductsDashboard();
