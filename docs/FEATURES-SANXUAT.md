@@ -1,30 +1,26 @@
 # ✨ Tính Năng — Tab Sản Xuất
 
-File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vùng HTML: `#view-sanxuat` trong `index.html`
+Tab này gồm 2 khối độc lập, dùng 3 sheet nguồn khác nhau:
+
+1. **Dashboard Sản Xuất** (`js/production-dashboard.js`) — dữ liệu **chuyến xe** (mỗi dòng = 1 chuyến vận chuyển). Dùng cho: tổng khối lượng vận chuyển, top trạm, phân bố sản phẩm, và **phân tích theo ca làm việc** (chỉ sheet này có cột Ca).
+2. **Đầu Vào / Đầu Ra Theo Trạm** (`js/finished-products-dashboard.js`) — dữ liệu **công thức sản xuất theo lô** (mỗi dòng = 1 lượt sản xuất, có cả khối lượng nguyên liệu vào và khối lượng từng sản phẩm ra trong cùng 1 dòng). Dùng cho: khối lượng đầu vào/đầu ra, hiệu suất, năng lực sản xuất, biến thiên theo trạm/sản phẩm.
+
+**Vì sao tách riêng:** ban đầu khối lượng đầu vào/đầu ra và hiệu suất được tính từ sheet chuyến xe (dựa vào tag `(kho: NK)`/`(kho: TP)` trong tên sản phẩm), nhưng cách này sai lệch — sheet chuyến xe không map 1:1 với từng lô sản xuất (xe chở có thể trễ/sớm hơn thời điểm sản xuất thực tế), và **không ghi nhận đủ mã sản phẩm đầu ra của trạm cát** (C1, C3) dưới dạng phân biệt được, nên "tổng đầu ra" tính từ sheet đó bị thiếu, không phản ánh đúng tổng của cả đá và cát. Sheet công thức sản xuất theo lô không có vấn đề này vì khối lượng vào/ra nằm ngay trên cùng 1 dòng theo đúng tỉ lệ quy đổi thật của trạm.
 
 ---
 
+# 1. Dashboard Sản Xuất (chuyến xe)
+
+File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vùng HTML: đầu `#view-sanxuat` trong `index.html`
+
 ## KPI Cards
 
-| Card | Nội dung | Ghi chú |
-|------|----------|---------|
-| Tổng Đầu Vào (M³) | Tổng khối lượng các dòng `LoaiKho = 'Đầu vào'` (nguyên liệu nhập kho, tag `(kho: NK)`) | |
-| Tổng Đầu Ra (M³) | Tổng khối lượng các dòng `LoaiKho = 'Đầu ra'` (thành phẩm, tag `(kho: TP)`) | |
-| Hiệu Suất Chuyển Đổi | `Tổng Đầu Ra / Tổng Đầu Vào × 100%` | Đo hao hụt/hiệu quả chế biến trong khoảng lọc |
-| Tổng Số Chuyến | Tổng `SỐ CHUYẾN` | Kèm trung bình m³ đầu ra/chuyến |
-| Trạm Hoạt Động | Số trạm (`TÊN TRẠM`) độc nhất | |
-
-*(Đã bỏ card "Xe Hoạt Động" — thông tin xe vẫn còn ở bộ lọc và bảng chi tiết, chỉ không còn ở vị trí nổi bật.)*
-
-## Phân loại Đầu Vào / Đầu Ra
-
-Cột `Tên Sản Phẩm` trong Sheet gắn hậu tố kho ngay trong tên, vd `"Đá hỗn hợp sau nổ mìn (kho: NK)"` hoặc `"Cấp phối thường loại 1 (kho: TP)"`. Hàm `classifyKho()` trong `production-dashboard.js` đọc tag trong ngoặc:
-
-- `NK` (nhập kho nguyên liệu) → **Đầu vào**
-- `TP` (thành phẩm) → **Đầu ra**
-- Không có tag (vd "Đất tầng phủ") → **Khác**
-
-Hàm `cleanProductName()` bỏ hậu tố `(kho: ..)` khi hiển thị tên sản phẩm cho gọn (bảng chi tiết, chart phân bố). Cột "Loại" trong bảng chi tiết hiển thị badge màu tương ứng (Đầu vào/Đầu ra/Khác).
+| Card | Nội dung |
+|------|----------|
+| Tổng Khối Lượng (M³) | Tổng `TỔNG KHỐI LƯỢNG` trong khoảng lọc, kèm % so với tổng toàn bộ dữ liệu |
+| Tổng Số Chuyến | Tổng `SỐ CHUYẾN`, kèm trung bình m³/chuyến |
+| Trạm Hoạt Động | Số trạm (`TÊN TRẠM`) độc nhất |
+| Ca Ghi Nhận | Số loại ca (trong 5 nhóm chuẩn hoá) có dữ liệu trong khoảng lọc, không tính "Không rõ ca" |
 
 ## Ca làm việc
 
@@ -34,86 +30,102 @@ Cột `Ca` trong Sheet do nhập tay nên có nhiều biến thể chính tả/k
 
 Khoảng **64% số dòng trong Sheet gốc chưa được nhập Ca** (để trống) — các dòng này được gộp vào nhóm `Không rõ ca`, hiển thị riêng để thấy rõ độ phủ dữ liệu thay vì ẩn đi. `caSortOrder()` giữ thứ tự hiển thị cố định theo ca thay vì sort alphabet.
 
+Hàm `cleanProductName()` bỏ hậu tố `(kho: NK)`/`(kho: TP)` khỏi tên sản phẩm khi hiển thị (bảng chi tiết, chart phân bố) — hậu tố này **không** còn được dùng để phân loại đầu vào/đầu ra ở khối này nữa (xem phần "Vì sao tách riêng" ở trên).
+
 ## Biểu đồ
 
-1. **Xu Hướng Đầu Vào / Đầu Ra Theo Ngày** (line, 2 đường) — so sánh trực tiếp lượng nguyên liệu vào và thành phẩm ra mỗi ngày
-2. **Đầu Vào vs Đầu Ra Theo Trạm** (bar ngang, 2 nhóm cột) — mọi trạm có dữ liệu trong khoảng lọc, sắp theo tổng giảm dần
-3. **Khối Lượng Theo Ca Làm Việc** (bar chồng Đầu vào/Đầu ra) — trả lời trực tiếp câu hỏi "ca nào sản xuất nhiều nhất"
-4. **Phân Bố Theo Sản Phẩm** (doughnut) — theo tên sản phẩm đã làm sạch (vd Đá hỗn hợp, Cấp phối thường loại 1...)
+1. **Xu Hướng Khối Lượng Theo Ngày** (line) — tổng khối lượng m³ mỗi ngày
+2. **Top 10 Trạm Theo Khối Lượng** (bar ngang)
+3. **Khối Lượng Theo Ca Làm Việc** (bar) — trả lời câu hỏi "ca nào vận chuyển nhiều nhất"
+4. **Phân Bố Theo Sản Phẩm** (doughnut) — theo tên sản phẩm đã làm sạch
 
-*(Đã bỏ "Top 10 Trạm Theo Khối Lượng" và "Top 10 Xe Theo Khối Lượng" — thay bằng 2 biểu đồ trên, tập trung vào đầu vào/đầu ra và ca thay vì xếp hạng đơn thuần.)*
-
-## Năng Lực Sản Xuất Theo Trạm (bảng mới)
-
-Bảng riêng, tính lại theo `filteredData` (tôn trọng mọi bộ lọc đang chọn) — mỗi dòng 1 trạm:
-
-| Cột | Cách tính |
-|-----|-----------|
-| Số Ngày Hoạt Động | Số ngày distinct có khối lượng > 0 (vào hoặc ra) tại trạm đó |
-| Tổng Đầu Vào / Tổng Đầu Ra | Tổng theo `LoaiKho` trong khoảng lọc |
-| Hiệu Suất (%) | Đầu ra / Đầu vào — đo mức hao hụt chế biến của từng trạm |
-| TB Đầu Ra/Ngày | Tổng đầu ra ÷ số ngày hoạt động — sản lượng bình quân |
-| Đỉnh Đầu Ra/Ngày | Ngày có đầu ra cao nhất tại trạm đó — proxy cho công suất tối đa quan sát được |
-
-Sắp xếp mặc định theo Tổng Đầu Ra giảm dần. Dùng bảng này để so sánh năng lực thực tế giữa các trạm (không chỉ tổng sản lượng mà cả hiệu suất và mức ổn định).
+*(Đã bỏ "Top 10 Xe Theo Khối Lượng" theo yêu cầu — thông tin xe vẫn còn ở bộ lọc và bảng chi tiết.)*
 
 ## Bộ lọc — lọc chéo (cùng cơ chế với tab Bán Hàng)
 
-7 bộ lọc: Từ ngày, Đến ngày, Tháng, Trạm, Sản phẩm, Xe, Ca — mỗi dropdown chỉ hiện giá trị còn khớp với các filter khác đang chọn. Vd chọn 1 Trạm → Xe/Ca chỉ hiện những xe/ca từng hoạt động ở trạm đó trong khoảng ngày đang lọc.
+7 bộ lọc: Từ ngày, Đến ngày, Tháng, Trạm, Sản phẩm, Xe, Ca — mỗi dropdown chỉ hiện giá trị còn khớp với các filter khác đang chọn.
 
 Xem chi tiết cơ chế trong [`FEATURES-BANHANG.md`](FEATURES-BANHANG.md#bộ-lọc--cơ-chế-lọc-chéo-faceted-filtering) — logic giống hệt, chỉ khác tên trường dữ liệu.
 
 ## Bảng chi tiết
 
-Cột: Ngày, Trạm, Sản Phẩm, Loại (badge Đầu vào/Đầu ra/Khác), Ca, Xe, Số Chuyến, Khối Lượng (m³), Ghi Chú.
-
-- Click header cột (trừ Loại và Ghi Chú) để sort
-- Phân trang 20 dòng/trang
+Cột: Ngày, Trạm, Sản Phẩm, Ca, Xe, Số Chuyến, Khối Lượng (m³), Ghi Chú. Click header (trừ Ghi Chú) để sort. Phân trang 20 dòng/trang.
 
 ## Xử lý số liệu đặc thù
 
-Cột khối lượng trong Sheet dùng **dấu phẩy thập phân** kiểu Việt Nam (vd `310,0` nghĩa là 310.0), khác với sheet Bán Hàng dùng dấu chấm bình thường. Hàm `parseVNNumber()` trong `production-dashboard.js` tự chuyển đổi: bỏ dấu chấm (phân cách nghìn nếu có), đổi dấu phẩy thành dấu chấm, rồi parse số.
-
-Tên cột trong Sheet Sản Xuất cũng không cần khớp tuyệt đối — hàm `findKey()` dò cột theo từ khóa (vd tìm cột chứa cả "TÊN" và "TRẠM") để tránh lỗi khi khoảng trắng/viết hoa trong Sheet không đồng nhất.
+Cột khối lượng dùng **dấu phẩy thập phân** kiểu Việt Nam (vd `310,0` = 310.0). Hàm `parseVNNumber()` tự chuyển đổi. Tên cột cũng không cần khớp tuyệt đối — hàm `findKey()` dò theo từ khóa.
 
 ## Cập nhật & tải dữ liệu
 
-Khác với tab Bán Hàng, tab Sản Xuất **không tự fetch dữ liệu khi trang vừa load** — chỉ fetch lần đầu tiên khi người dùng bấm vào tab "🏭 Sản Xuất" (biến `loaded` trong `ProductionDashboard`, kích hoạt qua `switchView()` ở `js/app.js`). Mục đích: trang mở nhanh hơn, không tải dữ liệu không cần thiết nếu người dùng chỉ xem Bán Hàng.
-
-Sau lần tải đầu, nút "🔄 Cập nhật Dữ Liệu" trong tab dùng để fetch lại dữ liệu mới nhất bất cứ lúc nào.
+Không tự fetch khi trang vừa load — chỉ fetch lần đầu khi bấm vào tab "🏭 Sản Xuất" (biến `loaded`, kích hoạt qua `switchView()` ở `js/app.js`). Nút "🔄 Cập nhật Dữ Liệu" fetch lại bất cứ lúc nào.
 
 ---
 
-## Thành Phẩm Theo Trạm (bổ sung)
+# 2. Đầu Vào / Đầu Ra Theo Trạm
 
-File logic: [`js/finished-products-dashboard.js`](../js/finished-products-dashboard.js) · Vùng HTML: cuối `#view-sanxuat`, dưới bảng "Chi Tiết Sản Xuất"
+File logic: [`js/finished-products-dashboard.js`](../js/finished-products-dashboard.js) · Vùng HTML: cuối `#view-sanxuat`, dưới bảng chi tiết của khối 1
 
-### Nguồn dữ liệu
+## Nguồn dữ liệu — 2 sheet "công thức sản xuất theo lô"
 
-2 sheet riêng, khác với sheet chuyến xe ở trên — đây là dữ liệu **đầu ra thành phẩm vào kho** của từng trạm sản xuất:
+- **Trạm Đá** (`gid=1255295556`): mỗi dòng = 1 lô sản xuất của 1 trạm (`TRAMDA1`, `TRAMDA2-350`, `TRAMDA3-500`, `TRAMDA4-350`), có **1 nguyên liệu đầu vào** (`Mã HC`, luôn là `DHH` — đá hỗn hợp sau nổ mìn) và ra tối đa 5 sản phẩm: `D12`, `D24`, `MB`, `MS`, `CPT1`. Tổng đầu ra ≈ 100% đầu vào (không hao hụt theo quy ước).
+- **Trạm Cát** (`gid=18320018`): mỗi dòng = 1 lô sản xuất của 1 trạm (`TRAMCAT1`, `TRAMCAT2`, `TRAMCAT3`), có **tối đa 3 nguyên liệu đầu vào** (khác nhau giữa các lô: `DHH`, `CPT1`, `MB`, `MS`, `DTP`...) và ra tối đa 3 sản phẩm, thực tế dùng 2 mã: `C1`, `C3`. Tổng đầu ra ≈ **90%** đầu vào — **10% hao hụt** theo quy ước (đã kiểm chứng khớp với dữ liệu thật, vd lô 310,00 m³ vào → 248,00 + 31,00 = 279,00 m³ ra = đúng 90%).
 
-- Trạm Đá (`gid=1255295556`): mỗi dòng = 1 lượt sản xuất của 1 trạm (`TRAMDA1`, `TRAMDA2-350`, `TRAMDA3-500`, `TRAMDA4-350`), ra tối đa 5 sản phẩm/dòng theo tỉ lệ cố định: `D12`, `D24`, `MB`, `MS`, `CPT1`.
-- Trạm Cát (`gid=18320018`): mỗi dòng = 1 lượt sản xuất của 1 trạm (`TRAMCAT1`, `TRAMCAT2`, `TRAMCAT3`), ra tối đa 3 sản phẩm/dòng, thực tế đang dùng 2 mã: `C1`, `C3`.
+Cả 2 sheet ở dạng **"rộng"** (nhiều cặp cột Mã/KL trên 1 dòng). Hàm `parseWideCSV()` dò theo **chỉ số cột cố định** (không theo tên cột, vì dòng tiêu đề có nhiều dòng gộp/xuống dòng khó khớp tên) để dựng mảng **lô** (`this.lots`), rồi "nổ" ra 2 mảng chi tiết: `outputRows` (1 dòng/sản phẩm) và `inputRows` (1 dòng/nguyên liệu).
 
-Cả 2 sheet đều là dữ liệu **dạng "rộng"** (nhiều cặp cột Mã SP / KL SP trên cùng 1 dòng), khác với sheet chuyến xe vốn đã ở dạng "dài" (1 dòng = 1 sản phẩm). Hàm `parseWideCSV()` dò theo **chỉ số cột cố định** (không dò theo tên cột như `production-dashboard.js`, vì dòng tiêu đề của 2 sheet này có nhiều dòng gộp/xuống dòng gây khó khớp tên) để chuyển mỗi cặp Mã SP/KL SP thành 1 bản ghi riêng.
+## Trạm nào ra sản phẩm gì
 
-### Trạm nào ra sản phẩm gì
+Bảng "🧱 Trạm Sản Xuất Ra Sản Phẩm Gì?" liệt kê mọi mã sản phẩm từng xuất hiện ở mỗi trạm (kể cả ngày sản lượng = 0). Dựng tự động từ dữ liệu (`buildStationProducts()`), không hard-code.
 
-Bảng "🧱 Trạm Sản Xuất Ra Sản Phẩm Gì?" liệt kê mọi mã sản phẩm từng xuất hiện ở mỗi trạm (kể cả những ngày khối lượng = 0 — vì 0 chỉ có nghĩa ngày đó không ra hàng, không có nghĩa trạm không có khả năng ra sản phẩm đó). Danh sách này được dựng tự động từ dữ liệu (`buildStationProducts()`), không hard-code, nên luôn khớp với sheet nguồn.
+## Bộ lọc
 
-### Biểu đồ theo ngày lựa chọn
+5 bộ lọc, áp dụng đồng thời (không lọc chéo — danh sách option cố định từ toàn bộ dữ liệu):
 
-Bộ chọn "Chọn ngày" (mặc định = ngày mới nhất có dữ liệu) lọc riêng cho khối này, độc lập với 6 bộ lọc phía trên:
+- **Từ ngày / Đến ngày** — mặc định = toàn bộ khoảng có dữ liệu
+- **Trạm**
+- **SP Đầu Ra** — lọc theo mã sản phẩm ra (D12, D24, MB, MS, CPT1, C1, C3)
+- **SP Đầu Vào** — lọc theo mã nguyên liệu vào (DHH, CPT1, MB, MS, DTP...) — chủ yếu hữu ích cho trạm cát vì trạm đá luôn chỉ nhận 1 loại nguyên liệu (DHH)
 
-1. **Khối Lượng Theo Trạm (chồng theo sản phẩm)** — bar chart, mỗi cột là 1 trạm, chồng theo từng mã sản phẩm trạm đó ra trong ngày.
-2. **Tỷ Trọng Theo Mã Sản Phẩm** — doughnut, tổng khối lượng từng mã sản phẩm trong ngày, gộp tất cả trạm.
+**Lưu ý quan trọng:** bộ lọc SP Đầu Ra chỉ ảnh hưởng đến số liệu/biểu đồ **đầu ra**, bộ lọc SP Đầu Vào chỉ ảnh hưởng số liệu/biểu đồ **đầu vào** — hai chiều lọc độc lập. Riêng **bảng Năng Lực Sản Xuất luôn tính trên toàn bộ lô** (không áp 2 bộ lọc sản phẩm này), để hiệu suất phản ánh đúng tỉ lệ quy đổi thật của cả trạm thay vì bị méo do chỉ xem 1 sản phẩm con.
 
-Kèm 4 KPI: Tổng thành phẩm, Đá các loại, Cát các loại, Số trạm hoạt động (khối lượng > 0) trong ngày đã chọn.
+## KPI Cards
 
-### Số liệu
+| Card | Nội dung |
+|------|----------|
+| Tổng Đầu Vào (M³) | Tổng `inputRows` đã lọc |
+| Tổng Đầu Ra (M³) | Tổng `outputRows` đã lọc — **gồm cả sản phẩm đá và cát cộng chung**, khắc phục lỗi thiếu đầu ra cát ở cách tính cũ |
+| Trạm Hoạt Động | Số trạm có lô trong khoảng lọc |
+| Số Lượt Sản Xuất | Số lô (`this.filteredLots.length`) |
 
-Cùng quy ước dấu phẩy thập phân kiểu Việt Nam như sheet chuyến xe (`parseVNNumber()` trong file này là bản riêng, logic giống hệt bản trong `production-dashboard.js`).
+## Biểu đồ biến thiên (theo yêu cầu "xem sự biến thiên")
 
-### Tải dữ liệu
+1. **Biến Thiên Sản Lượng Đầu Ra Theo Trạm** (line, nhiều đường — mỗi trạm 1 đường màu riêng) — thấy rõ trạm nào tăng/giảm/bất ổn theo ngày
+2. **Biến Thiên Theo Sản Phẩm Đầu Ra** (line, nhiều đường — mỗi mã sản phẩm 1 đường) — thấy rõ sản phẩm nào tăng/giảm theo ngày, không phụ thuộc trạm nào sản xuất
 
-Cũng lazy-load: chỉ fetch khi vào tab "🏭 Sản Xuất" lần đầu (`finishedProductsDashboard.loaded`, kích hoạt cùng lúc với `prodDashboard` trong `switchView()`).
+Cả 2 chart dùng chung `outputRows` đã lọc (theo ngày/trạm/SP Đầu Ra), màu được gán cố định theo `colorFor(index)` để nhất quán giữa các lần vẽ lại.
+
+## Biểu đồ tỷ trọng (toàn khoảng lọc)
+
+3. **Tỷ Trọng Sản Lượng Theo Sản Phẩm Đầu Ra** (doughnut)
+4. **Tỷ Trọng Theo Nguyên Liệu Đầu Vào** (doughnut)
+
+## Năng Lực Sản Xuất Theo Trạm (bảng)
+
+Mỗi dòng 1 trạm, tính từ `filteredLots` (chỉ lọc theo ngày + trạm, **không** theo SP Đầu Ra/Vào):
+
+| Cột | Cách tính |
+|-----|-----------|
+| Số Ngày HĐ | Số ngày distinct có khối lượng vào hoặc ra > 0 tại trạm đó |
+| Tổng Đầu Vào / Tổng Đầu Ra | Tổng `khoiLuongVao`/`khoiLuongRa` của các lô |
+| Hiệu Suất (%) | Đầu ra ÷ Đầu vào — kỳ vọng **~100% ở trạm đá, ~90% ở trạm cát** (10% hao hụt); số liệu lệch xa khỏi mức này là dấu hiệu cần kiểm tra dữ liệu |
+| TB Đầu Ra/Ngày | Tổng đầu ra ÷ số ngày hoạt động |
+| Đỉnh Đầu Ra/Ngày | Ngày có đầu ra cao nhất tại trạm đó — proxy cho công suất tối đa quan sát được |
+
+Sắp xếp mặc định theo Tổng Đầu Ra giảm dần.
+
+## Số liệu
+
+Cùng quy ước dấu phẩy thập phân kiểu Việt Nam (`parseVNNumber()`, bản riêng trong file này). Ngày trong 2 sheet nguồn không đồng nhất định dạng (`05/01/2026` lẫn `13/1/2026`) — `toISODate()` tự pad về `yyyy-mm-dd`.
+
+## Tải dữ liệu
+
+Lazy-load: chỉ fetch khi vào tab "🏭 Sản Xuất" lần đầu (`finishedProductsDashboard.loaded`, kích hoạt cùng lúc với `prodDashboard` trong `switchView()`).

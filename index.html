@@ -236,19 +236,9 @@
             <!-- KPI Cards -->
             <div class="kpi-row">
                 <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Tổng Đầu Vào (M³)</div>
-                    <div class="kpi-value" id="sx-kpi-khoiluong-vao">0</div>
-                    <div class="kpi-subtext">Nguyên liệu nhập kho (NK)</div>
-                </div>
-                <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Tổng Đầu Ra (M³)</div>
-                    <div class="kpi-value" id="sx-kpi-khoiluong-ra">0</div>
-                    <div class="kpi-subtext">Thành phẩm (TP)</div>
-                </div>
-                <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Hiệu Suất Chuyển Đổi</div>
-                    <div class="kpi-value" id="sx-kpi-hieusuat">0</div>
-                    <div class="kpi-subtext" id="sx-kpi-hieusuat-sub"></div>
+                    <div class="kpi-label">Tổng Khối Lượng (M³)</div>
+                    <div class="kpi-value" id="sx-kpi-khoiluong">0</div>
+                    <div class="kpi-subtext" id="sx-kpi-khoiluong-sub"></div>
                 </div>
                 <div class="kpi-card dashboard-card">
                     <div class="kpi-label">Tổng Số Chuyến</div>
@@ -260,18 +250,23 @@
                     <div class="kpi-value" id="sx-kpi-tram">0</div>
                     <div class="kpi-subtext">Trạm sản xuất</div>
                 </div>
+                <div class="kpi-card dashboard-card">
+                    <div class="kpi-label">Ca Ghi Nhận</div>
+                    <div class="kpi-value" id="sx-kpi-ca">0</div>
+                    <div class="kpi-subtext">Số loại ca có dữ liệu (không tính "Không rõ ca")</div>
+                </div>
             </div>
 
             <!-- Charts -->
             <div class="charts-grid">
                 <div class="chart-card dashboard-card">
-                    <h3>📈 Xu Hướng Đầu Vào / Đầu Ra Theo Ngày</h3>
+                    <h3>📈 Xu Hướng Khối Lượng Theo Ngày</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-trend"></canvas>
                     </div>
                 </div>
                 <div class="chart-card dashboard-card">
-                    <h3>⚖️ Đầu Vào vs Đầu Ra Theo Trạm</h3>
+                    <h3>🏆 Top 10 Trạm Theo Khối Lượng</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-tram"></canvas>
                     </div>
@@ -293,30 +288,9 @@
                 </div>
             </div>
 
-            <!-- Năng lực sản xuất -->
-            <div class="table-card dashboard-card">
-                <h3>🏋️ Năng Lực Sản Xuất Theo Trạm</h3>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Trạm</th>
-                                <th>Số Ngày Hoạt Động</th>
-                                <th>Tổng Đầu Vào (m³)</th>
-                                <th>Tổng Đầu Ra (m³)</th>
-                                <th>Hiệu Suất (%)</th>
-                                <th>TB Đầu Ra/Ngày (m³)</th>
-                                <th>Đỉnh Đầu Ra/Ngày (m³)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sx-capacity-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
             <!-- Table -->
             <div class="table-card dashboard-card">
-                <h3>📋 Chi Tiết Sản Xuất</h3>
+                <h3>📋 Chi Tiết Sản Xuất (chuyến xe)</h3>
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
@@ -324,7 +298,6 @@
                                 <th onclick="prodDashboard.sortTable('NgayGoc')">Ngày ▼</th>
                                 <th onclick="prodDashboard.sortTable('TenTram')">Trạm</th>
                                 <th onclick="prodDashboard.sortTable('TenSanPham')">Sản Phẩm</th>
-                                <th onclick="prodDashboard.sortTable('LoaiKho')">Loại</th>
                                 <th onclick="prodDashboard.sortTable('Ca')">Ca</th>
                                 <th onclick="prodDashboard.sortTable('BienSoXe')">Xe</th>
                                 <th onclick="prodDashboard.sortTable('SoChuyen')">Số Chuyến</th>
@@ -357,46 +330,107 @@
             </div>
 
             <div class="chart-card dashboard-card" style="margin-top:32px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-                    <h3 style="margin:0;padding:0;border:none;">🏗️ Thành Phẩm Theo Ngày Lựa Chọn</h3>
+                <h3 style="margin:0 0 20px;padding:0;border:none;">🏗️ Đầu Vào / Đầu Ra Theo Trạm</h3>
+
+                <div class="filters-container" style="margin-bottom:20px;">
                     <div class="filter-group">
-                        <label for="tp-filter-date">Chọn ngày</label>
-                        <input type="date" id="tp-filter-date" onchange="finishedProductsDashboard.onDateChange()">
+                        <label for="tp-filter-start">Từ ngày</label>
+                        <input type="date" id="tp-filter-start" onchange="finishedProductsDashboard.onFilterChange()">
+                    </div>
+                    <div class="filter-group">
+                        <label for="tp-filter-end">Đến ngày</label>
+                        <input type="date" id="tp-filter-end" onchange="finishedProductsDashboard.onFilterChange()">
+                    </div>
+                    <div class="filter-group">
+                        <label for="tp-filter-tram">Trạm</label>
+                        <select id="tp-filter-tram" onchange="finishedProductsDashboard.onFilterChange()">
+                            <option value="all">Tất cả trạm</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="tp-filter-spra">SP Đầu Ra</label>
+                        <select id="tp-filter-spra" onchange="finishedProductsDashboard.onFilterChange()">
+                            <option value="all">Tất cả</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="tp-filter-spvao">SP Đầu Vào</label>
+                        <select id="tp-filter-spvao" onchange="finishedProductsDashboard.onFilterChange()">
+                            <option value="all">Tất cả</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="kpi-row" style="margin-bottom:24px;">
                     <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Tổng Thành Phẩm (M³)</div>
-                        <div class="kpi-value" id="tp-kpi-tong">0</div>
+                        <div class="kpi-label">Tổng Đầu Vào (M³)</div>
+                        <div class="kpi-value" id="tp-kpi-vao">0</div>
                     </div>
                     <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Đá Các Loại (M³)</div>
-                        <div class="kpi-value" id="tp-kpi-da">0</div>
-                    </div>
-                    <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Cát Các Loại (M³)</div>
-                        <div class="kpi-value" id="tp-kpi-cat">0</div>
+                        <div class="kpi-label">Tổng Đầu Ra (M³)</div>
+                        <div class="kpi-value" id="tp-kpi-ra">0</div>
+                        <div class="kpi-subtext">Gồm cả sản phẩm đá và cát</div>
                     </div>
                     <div class="kpi-card dashboard-card">
                         <div class="kpi-label">Trạm Hoạt Động</div>
                         <div class="kpi-value" id="tp-kpi-tram">0</div>
                     </div>
+                    <div class="kpi-card dashboard-card">
+                        <div class="kpi-label">Số Lượt Sản Xuất</div>
+                        <div class="kpi-value" id="tp-kpi-luot">0</div>
+                    </div>
                 </div>
 
                 <div class="charts-grid">
                     <div class="chart-card dashboard-card">
-                        <h3>📦 Khối Lượng Theo Trạm (chồng theo sản phẩm)</h3>
+                        <h3>📈 Biến Thiên Sản Lượng Đầu Ra Theo Trạm</h3>
                         <div class="chart-wrapper">
-                            <canvas id="tp-chart-station"></canvas>
+                            <canvas id="tp-chart-trend-tram"></canvas>
                         </div>
                     </div>
                     <div class="chart-card dashboard-card">
-                        <h3>🥧 Tỷ Trọng Theo Mã Sản Phẩm</h3>
+                        <h3>📈 Biến Thiên Theo Sản Phẩm Đầu Ra</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="tp-chart-trend-sp"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card dashboard-card">
+                        <h3>🥧 Tỷ Trọng Sản Lượng Theo Sản Phẩm Đầu Ra</h3>
                         <div class="chart-wrapper">
                             <canvas id="tp-chart-product"></canvas>
                         </div>
                     </div>
+                    <div class="chart-card dashboard-card">
+                        <h3>🥧 Tỷ Trọng Theo Nguyên Liệu Đầu Vào</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="tp-chart-input"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-card dashboard-card" style="margin-top:32px;">
+                <h3>🏋️ Năng Lực Sản Xuất Theo Trạm</h3>
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Hiệu suất tính trên toàn bộ lô sản xuất trong khoảng ngày đã lọc (không phụ thuộc bộ lọc SP Đầu Ra/Đầu Vào) — trạm đá quy đổi ~100%, trạm cát ~90% (10% hao hụt).</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Trạm</th>
+                                <th>Loại</th>
+                                <th>Số Ngày HĐ</th>
+                                <th>Tổng Đầu Vào (m³)</th>
+                                <th>Tổng Đầu Ra (m³)</th>
+                                <th>Hiệu Suất (%)</th>
+                                <th>TB Đầu Ra/Ngày (m³)</th>
+                                <th>Đỉnh Đầu Ra/Ngày (m³)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tp-capacity-body"></tbody>
+                    </table>
                 </div>
             </div>
 
