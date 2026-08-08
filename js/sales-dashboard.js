@@ -1,5 +1,11 @@
 // ================= DASHBOARD BÁN HÀNG =================
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv';
+// Dữ liệu bán hàng được gộp từ 2 sheet:
+// - "Trang tính3" (gid=618992108): dữ liệu từ 01/07/2026 trở đi (sheet gốc)
+// - "BH_T1-T6" (gid=1674192120): sheet bổ sung, dữ liệu 02/01/2026 - 30/06/2026
+// (trước đây SHEET_URL không có gid nên mặc định trỏ vào sheet đầu tiên - dễ vỡ khi thêm/xoá tab;
+// nay trỏ đích danh gid để tránh lấy nhầm sheet)
+const SHEET_URL_MAIN = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=618992108';
+const SHEET_URL_SUPPLEMENT = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=1674192120';
 
 class Dashboard {
     constructor() {
@@ -26,11 +32,14 @@ class Dashboard {
         statusMsg.textContent = '';
 
         try {
-            const response = await fetch(SHEET_URL);
-            if (!response.ok) throw new Error('Không thể tải dữ liệu từ Google Sheet');
+            const [resMain, resSupp] = await Promise.all([
+                fetch(SHEET_URL_MAIN),
+                fetch(SHEET_URL_SUPPLEMENT)
+            ]);
+            if (!resMain.ok || !resSupp.ok) throw new Error('Không thể tải dữ liệu từ Google Sheet');
 
-            const csv = await response.text();
-            this.parseCSV(csv);
+            const [csvMain, csvSupp] = await Promise.all([resMain.text(), resSupp.text()]);
+            await this.parseCSV(csvMain, csvSupp);
 
             this.showStatus('✓ Dữ liệu đã được cập nhật thành công', 'success');
 
@@ -42,29 +51,50 @@ class Dashboard {
         }
     }
 
-    parseCSV(csv) {
-        Papa.parse(csv, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                this.rawData = results.data.map(row => ({
-                    ...row,
-                    SoLuong: parseFloat(row.SoLuong) || 0,
-                    DonGia: parseFloat(row.DonGia) || 0,
-                    ThanhTien: parseFloat(row.ThanhTien) || 0,
-                    date: this.extractDate(row.ThoiGian),
-                    thang: this.extractMonth(row.ThoiGian)
-                })).filter(r => r.ThoiGian); // Loại hàng trống
-
-                this.setDefaultDates();
-                this.updateFilterOptions();
-                this.applyFilters();
-                document.getElementById('update-time').textContent = new Date().toLocaleString('vi-VN');
-            },
-            error: (error) => {
-                throw new Error('Lỗi parse CSV: ' + error.message);
-            }
+    // Parse 1 chuỗi CSV thành mảng object (Promise hoá Papa.parse để gộp được nhiều sheet)
+    parseOneCSV(csv) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(csv, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => resolve(results.data),
+                error: (error) => reject(new Error('Lỗi parse CSV: ' + error.message))
+            });
         });
+    }
+
+    // Gộp dữ liệu từ sheet chính (Trang tính3, từ 01/07 trở đi) + sheet bổ sung (BH_T1-T6, 01/01 - 30/06)
+    async parseCSV(csvMain, csvSupplement) {
+        const [mainRows, suppRows] = await Promise.all([
+            this.parseOneCSV(csvMain),
+            this.parseOneCSV(csvSupplement)
+        ]);
+
+        // Loại trùng theo MaPhieuBanHang, phòng trường hợp 2 sheet có dữ liệu giao nhau
+        const seen = new Set();
+        const merged = [];
+        [...suppRows, ...mainRows].forEach(row => {
+            const key = row.MaPhieuBanHang || null;
+            if (key) {
+                if (seen.has(key)) return;
+                seen.add(key);
+            }
+            merged.push(row);
+        });
+
+        this.rawData = merged.map(row => ({
+            ...row,
+            SoLuong: parseFloat(row.SoLuong) || 0,
+            DonGia: parseFloat(row.DonGia) || 0,
+            ThanhTien: parseFloat(row.ThanhTien) || 0,
+            date: this.extractDate(row.ThoiGian),
+            thang: this.extractMonth(row.ThoiGian)
+        })).filter(r => r.ThoiGian); // Loại hàng trống
+
+        this.setDefaultDates();
+        this.updateFilterOptions();
+        this.applyFilters();
+        document.getElementById('update-time').textContent = new Date().toLocaleString('vi-VN');
     }
 
     extractDate(timeStr) {

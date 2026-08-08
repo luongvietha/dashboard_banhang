@@ -236,37 +236,37 @@
             <!-- KPI Cards -->
             <div class="kpi-row">
                 <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Tổng Khối Lượng (M³)</div>
+                    <div class="kpi-label">Tổng Sản Lượng (m³)</div>
                     <div class="kpi-value" id="sx-kpi-khoiluong">0</div>
                     <div class="kpi-subtext" id="sx-kpi-khoiluong-sub"></div>
                 </div>
                 <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Tổng Số Chuyến</div>
+                    <div class="kpi-label">Tổng Số Lượt Vận Chuyển</div>
                     <div class="kpi-value" id="sx-kpi-chuyen">0</div>
                     <div class="kpi-subtext" id="sx-kpi-chuyen-sub"></div>
                 </div>
                 <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Trạm Hoạt Động</div>
+                    <div class="kpi-label">Số Trạm Vận Hành</div>
                     <div class="kpi-value" id="sx-kpi-tram">0</div>
-                    <div class="kpi-subtext">Trạm sản xuất</div>
+                    <div class="kpi-subtext">Số trạm phát sinh sản lượng trong kỳ</div>
                 </div>
                 <div class="kpi-card dashboard-card">
-                    <div class="kpi-label">Ca Ghi Nhận</div>
+                    <div class="kpi-label">Ca Vận Hành</div>
                     <div class="kpi-value" id="sx-kpi-ca">0</div>
-                    <div class="kpi-subtext">Số loại ca có dữ liệu (không tính "Không rõ ca")</div>
+                    <div class="kpi-subtext">Số ca làm việc có phát sinh dữ liệu (không tính "Không rõ ca")</div>
                 </div>
             </div>
 
             <!-- Charts -->
             <div class="charts-grid">
                 <div class="chart-card dashboard-card">
-                    <h3>📈 Xu Hướng Khối Lượng Theo Ngày</h3>
+                    <h3>📈 Xu Hướng Sản Lượng Theo Ngày</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-trend"></canvas>
                     </div>
                 </div>
                 <div class="chart-card dashboard-card">
-                    <h3>🏆 Top 10 Trạm Theo Khối Lượng</h3>
+                    <h3>🏆 Top 10 Trạm Theo Sản Lượng</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-tram"></canvas>
                     </div>
@@ -275,13 +275,13 @@
 
             <div class="charts-grid">
                 <div class="chart-card dashboard-card">
-                    <h3>🕒 Khối Lượng Theo Ca Làm Việc</h3>
+                    <h3>🕒 Sản Lượng Theo Ca Làm Việc</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-ca"></canvas>
                     </div>
                 </div>
                 <div class="chart-card dashboard-card">
-                    <h3>📊 Phân Bố Theo Sản Phẩm</h3>
+                    <h3>📊 Cơ Cấu Sản Lượng Theo Sản Phẩm</h3>
                     <div class="chart-wrapper">
                         <canvas id="sx-chart-sanpham"></canvas>
                     </div>
@@ -290,7 +290,7 @@
 
             <!-- Table -->
             <div class="table-card dashboard-card">
-                <h3>📋 Chi Tiết Sản Xuất (chuyến xe)</h3>
+                <h3>📋 Nhật Ký Sản Xuất & Vận Chuyển</h3>
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
@@ -299,9 +299,9 @@
                                 <th onclick="prodDashboard.sortTable('TenTram')">Trạm</th>
                                 <th onclick="prodDashboard.sortTable('TenSanPham')">Sản Phẩm</th>
                                 <th onclick="prodDashboard.sortTable('Ca')">Ca</th>
-                                <th onclick="prodDashboard.sortTable('BienSoXe')">Xe</th>
+                                <th onclick="prodDashboard.sortTable('BienSoXe')">Mã Xe</th>
                                 <th onclick="prodDashboard.sortTable('SoChuyen')">Số Chuyến</th>
-                                <th onclick="prodDashboard.sortTable('TongKhoiLuong')">Khối Lượng (m³)</th>
+                                <th onclick="prodDashboard.sortTable('TongKhoiLuong')">Sản Lượng (m³)</th>
                                 <th>Ghi Chú</th>
                             </tr>
                         </thead>
@@ -314,14 +314,14 @@
 
             <!-- ============ THÀNH PHẨM THEO TRẠM (bổ sung) ============ -->
             <div class="table-card dashboard-card" style="margin-top:32px;">
-                <h3>🧱 Trạm Sản Xuất Ra Sản Phẩm Gì?</h3>
+                <h3>🧱 Danh Mục Sản Phẩm Theo Trạm</h3>
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Trạm</th>
-                                <th>Loại Trạm</th>
-                                <th>Mã Sản Phẩm Sản Xuất</th>
+                                <th>Phân Loại Trạm</th>
+                                <th>Danh Mục Sản Phẩm Đầu Ra</th>
                             </tr>
                         </thead>
                         <tbody id="tp-station-products-body"></tbody>
@@ -330,7 +330,7 @@
             </div>
 
             <div class="chart-card dashboard-card" style="margin-top:32px;">
-                <h3 style="margin:0 0 20px;padding:0;border:none;">🏗️ Đầu Vào / Đầu Ra Theo Trạm</h3>
+                <h3 style="margin:0 0 20px;padding:0;border:none;">🏗️ Cân Bằng Vật Tư & Sản Lượng Theo Trạm</h3>
 
                 <div class="filters-container" style="margin-bottom:20px;">
                     <div class="filter-group">
@@ -371,7 +371,7 @@
                         <div class="kpi-subtext" id="tp-kpi-tbngay-sub"></div>
                     </div>
                     <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Trạm Hoạt Động</div>
+                        <div class="kpi-label">Số Trạm Vận Hành</div>
                         <div class="kpi-value" id="tp-kpi-tram">0</div>
                     </div>
                     <div class="kpi-card dashboard-card">
@@ -382,13 +382,13 @@
 
                 <div class="charts-grid">
                     <div class="chart-card dashboard-card">
-                        <h3>📈 Biến Thiên Sản Lượng Đầu Ra Theo Trạm</h3>
+                        <h3>📈 Xu Hướng Sản Lượng Đầu Ra Theo Trạm</h3>
                         <div class="chart-wrapper">
                             <canvas id="tp-chart-trend-tram"></canvas>
                         </div>
                     </div>
                     <div class="chart-card dashboard-card">
-                        <h3>📈 Biến Thiên Theo Sản Phẩm Đầu Ra</h3>
+                        <h3>📈 Xu Hướng Sản Lượng Theo Sản Phẩm</h3>
                         <div class="chart-wrapper">
                             <canvas id="tp-chart-trend-sp"></canvas>
                         </div>
@@ -397,13 +397,13 @@
 
                 <div class="charts-grid">
                     <div class="chart-card dashboard-card">
-                        <h3>🥧 Tỷ Trọng Sản Lượng Theo Sản Phẩm Đầu Ra</h3>
+                        <h3>🥧 Cơ Cấu Sản Lượng Đầu Ra</h3>
                         <div class="chart-wrapper">
                             <canvas id="tp-chart-product"></canvas>
                         </div>
                     </div>
                     <div class="chart-card dashboard-card">
-                        <h3>🥧 Tỷ Trọng Theo Nguyên Liệu Đầu Vào</h3>
+                        <h3>🥧 Cơ Cấu Nguyên Liệu Đầu Vào</h3>
                         <div class="chart-wrapper">
                             <canvas id="tp-chart-input"></canvas>
                         </div>
@@ -412,20 +412,20 @@
             </div>
 
             <div class="table-card dashboard-card" style="margin-top:32px;">
-                <h3>🏋️ Năng Lực Sản Xuất Theo Trạm</h3>
-                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Hiệu suất tính trên toàn bộ lô sản xuất trong khoảng ngày đã lọc (không phụ thuộc bộ lọc SP Đầu Ra/Đầu Vào) — trạm đá quy đổi ~100%, trạm cát ~90% (10% hao hụt).</p>
+                <h3>🏋️ Báo Cáo Hiệu Suất Vận Hành Theo Trạm</h3>
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Hiệu suất vận hành được tính dựa trên tổng sản lượng trong kỳ lọc (Định mức hao hụt quy đổi: Trạm đá ~0%, Trạm cát ~10%).</p>
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Trạm</th>
                                 <th>Loại</th>
-                                <th>Số Ngày HĐ</th>
+                                <th>Số Ngày Hoạt Động</th>
                                 <th>Tổng Đầu Vào (m³)</th>
                                 <th>Tổng Đầu Ra (m³)</th>
                                 <th>Hiệu Suất (%)</th>
-                                <th>TB Đầu Ra/Ngày (m³)</th>
-                                <th>Đỉnh Đầu Ra/Ngày (m³)</th>
+                                <th>Sản Lượng TB/Ngày (m³)</th>
+                                <th>Sản Lượng Cực Đại/Ngày (m³)</th>
                             </tr>
                         </thead>
                         <tbody id="tp-capacity-body"></tbody>

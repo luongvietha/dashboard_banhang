@@ -17,10 +17,10 @@ File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vù
 
 | Card | Nội dung |
 |------|----------|
-| Tổng Khối Lượng (M³) | Tổng `TỔNG KHỐI LƯỢNG` trong khoảng lọc, kèm % so với tổng toàn bộ dữ liệu |
-| Tổng Số Chuyến | Tổng `SỐ CHUYẾN`, kèm trung bình m³/chuyến |
-| Trạm Hoạt Động | Số trạm (`TÊN TRẠM`) độc nhất |
-| Ca Ghi Nhận | Số loại ca (trong 5 nhóm chuẩn hoá) có dữ liệu trong khoảng lọc, không tính "Không rõ ca" |
+| Tổng Sản Lượng (m³) | Tổng `TỔNG KHỐI LƯỢNG` trong khoảng lọc, kèm % so với tổng toàn bộ dữ liệu |
+| Tổng Số Lượt Vận Chuyển | Tổng `SỐ CHUYẾN`, kèm trung bình m³/chuyến |
+| Số Trạm Vận Hành | Số trạm (`TÊN TRẠM`) độc nhất |
+| Ca Vận Hành | Số loại ca (trong 5 nhóm chuẩn hoá) có dữ liệu trong khoảng lọc, không tính "Không rõ ca" |
 
 ## Ca làm việc
 
@@ -74,7 +74,7 @@ Cả 2 sheet ở dạng **"rộng"** (nhiều cặp cột Mã/KL trên 1 dòng).
 
 ## Trạm nào ra sản phẩm gì
 
-Bảng "🧱 Trạm Sản Xuất Ra Sản Phẩm Gì?" liệt kê mọi mã sản phẩm từng xuất hiện ở mỗi trạm (kể cả ngày sản lượng = 0). Dựng tự động từ dữ liệu (`buildStationProducts()`), không hard-code.
+Bảng "🧱 Danh Mục Sản Phẩm Theo Trạm" liệt kê mọi mã sản phẩm từng xuất hiện ở mỗi trạm (kể cả ngày sản lượng = 0). Dựng tự động từ dữ liệu (`buildStationProducts()`), không hard-code.
 
 ## Bộ lọc — multi-select + lọc chéo
 
@@ -94,32 +94,32 @@ Nút bấm hiện "Tất cả trạm" khi chưa chọn gì, hiện thẳng tên 
 | Tổng Đầu Vào (M³) | Tổng `inputRows` đã lọc |
 | Tổng Đầu Ra (M³) | Tổng `outputRows` đã lọc — **gồm cả sản phẩm đá và cát cộng chung**, khắc phục lỗi thiếu đầu ra cát ở cách tính cũ |
 | Sản Lượng TB/Ngày (M³) | Tổng đầu ra đã lọc ÷ số ngày **thực sự có sản lượng ra** trong khoảng lọc (không chia cho tổng số ngày lịch, vì trạm không chạy liên tục mọi ngày) — kèm chú thích số ngày dùng để tính |
-| Trạm Hoạt Động | Số trạm có lô trong khoảng lọc |
+| Số Trạm Vận Hành | Số trạm có lô trong khoảng lọc |
 | Số Lượt Sản Xuất | Số lô (`this.filteredLots.length`) |
 
-## Biểu đồ biến thiên (theo yêu cầu "xem sự biến thiên")
+## Biểu đồ xu hướng (theo yêu cầu "xem sự biến thiên")
 
-1. **Biến Thiên Sản Lượng Đầu Ra Theo Trạm** (line, nhiều đường — mỗi trạm 1 đường màu riêng) — thấy rõ trạm nào tăng/giảm/bất ổn theo ngày
-2. **Biến Thiên Theo Sản Phẩm Đầu Ra** (line, nhiều đường — mỗi mã sản phẩm 1 đường) — thấy rõ sản phẩm nào tăng/giảm theo ngày, không phụ thuộc trạm nào sản xuất
+1. **Xu Hướng Sản Lượng Đầu Ra Theo Trạm** (line, nhiều đường — mỗi trạm 1 đường màu riêng) — thấy rõ trạm nào tăng/giảm/bất ổn theo ngày
+2. **Xu Hướng Sản Lượng Theo Sản Phẩm** (line, nhiều đường — mỗi mã sản phẩm 1 đường) — thấy rõ sản phẩm nào tăng/giảm theo ngày, không phụ thuộc trạm nào sản xuất
 
 Cả 2 chart dùng chung `outputRows` đã lọc (theo ngày/trạm/SP Đầu Ra), màu được gán cố định theo `colorFor(index)` để nhất quán giữa các lần vẽ lại.
 
-## Biểu đồ tỷ trọng (toàn khoảng lọc)
+## Biểu đồ cơ cấu (toàn khoảng lọc)
 
-3. **Tỷ Trọng Sản Lượng Theo Sản Phẩm Đầu Ra** (doughnut)
-4. **Tỷ Trọng Theo Nguyên Liệu Đầu Vào** (doughnut)
+3. **Cơ Cấu Sản Lượng Đầu Ra** (doughnut)
+4. **Cơ Cấu Nguyên Liệu Đầu Vào** (doughnut)
 
-## Năng Lực Sản Xuất Theo Trạm (bảng)
+## Báo Cáo Hiệu Suất Vận Hành Theo Trạm (bảng)
 
 Mỗi dòng 1 trạm, tính từ `filteredLots` (chỉ lọc theo ngày + trạm, **không** theo SP Đầu Ra/Vào):
 
 | Cột | Cách tính |
 |-----|-----------|
-| Số Ngày HĐ | Số ngày distinct có khối lượng vào hoặc ra > 0 tại trạm đó |
+| Số Ngày Hoạt Động | Số ngày distinct có khối lượng vào hoặc ra > 0 tại trạm đó |
 | Tổng Đầu Vào / Tổng Đầu Ra | Tổng `khoiLuongVao`/`khoiLuongRa` của các lô |
 | Hiệu Suất (%) | Đầu ra ÷ Đầu vào — kỳ vọng **~100% ở trạm đá, ~90% ở trạm cát** (10% hao hụt); số liệu lệch xa khỏi mức này là dấu hiệu cần kiểm tra dữ liệu |
-| TB Đầu Ra/Ngày | Tổng đầu ra ÷ số ngày hoạt động |
-| Đỉnh Đầu Ra/Ngày | Ngày có đầu ra cao nhất tại trạm đó — proxy cho công suất tối đa quan sát được |
+| Sản Lượng TB/Ngày | Tổng đầu ra ÷ số ngày hoạt động |
+| Sản Lượng Cực Đại/Ngày | Ngày có đầu ra cao nhất tại trạm đó — proxy cho công suất tối đa quan sát được |
 
 Sắp xếp mặc định theo Tổng Đầu Ra giảm dần.
 
