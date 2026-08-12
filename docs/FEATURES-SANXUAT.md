@@ -22,6 +22,8 @@ File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vù
 | Số Trạm Vận Hành | Số trạm (`TÊN TRẠM`) độc nhất |
 | Ca Vận Hành | Số loại ca (trong 5 nhóm chuẩn hoá) có dữ liệu trong khoảng lọc, không tính "Không rõ ca" |
 
+**Bộ lọc nhanh** — Hôm qua / 7 Ngày qua / Tháng này / Tháng trước / Xóa bộ lọc (`applyQuickRange()`). Dùng **"Hôm qua"** thay vì "Hôm nay" vì dữ liệu chuyến xe cũng cập nhật muộn hơn 1 ngày so với ngày thực tế, giống khối Thành phẩm đầu ra bên dưới.
+
 ## Ca làm việc
 
 Cột `Ca` trong Sheet do nhập tay nên có nhiều biến thể chính tả/khoảng trắng (vd `"Ca 1 ( 7h00 - 16h30)"`, `"Ca 1 từ 7h-16h30"`...). Hàm `normalizeCa()` chuẩn hoá về 5 nhóm cố định dựa theo nhãn đứng đầu chuỗi (không phụ thuộc giờ giấc ghi kèm, vì giờ giấc ghi không đồng nhất giữa các dòng):

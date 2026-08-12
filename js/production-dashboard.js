@@ -426,7 +426,8 @@ class ProductionDashboard {
         this.renderTable();
     }
 
-    // Bộ lọc nhanh: 'today' | '7days' | 'thisMonth' | 'lastMonth' | 'reset'
+    // Bộ lọc nhanh: 'yesterday' | '7days' | 'thisMonth' | 'lastMonth' | 'reset'
+    // Dùng "Hôm qua" thay vì "Hôm nay" vì dữ liệu chuyến xe cũng cập nhật muộn hơn 1 ngày (giống khối thành phẩm).
     applyQuickRange(preset) {
         if (preset === 'reset') {
             this.setDefaultDates();
