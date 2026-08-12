@@ -61,7 +61,7 @@ Không tự fetch khi trang vừa load — chỉ fetch lần đầu khi bấm v�
 
 ---
 
-# 2. Đầu Vào / Đầu Ra Theo Trạm
+# 2. Thành phẩm đầu ra theo các trạm nghiền
 
 File logic: [`js/finished-products-dashboard.js`](../js/finished-products-dashboard.js) · Vùng HTML: cuối `#view-sanxuat`, dưới bảng chi tiết của khối 1
 
@@ -80,6 +80,7 @@ Bảng "🧱 Danh Mục Sản Phẩm Theo Trạm" liệt kê mọi mã sản ph�
 
 - **Từ ngày / Đến ngày** — mặc định = toàn bộ khoảng có dữ liệu
 - **Trạm**, **SP Đầu Ra**, **SP Đầu Vào** — dạng **multi-select** (dropdown checkbox, component `MultiSelect` dùng chung trong [`js/utils.js`](../js/utils.js)), cho phép chọn nhiều giá trị cùng lúc thay vì chỉ 1. Không chọn gì = hiểu là "tất cả".
+- **Bộ lọc nhanh** — Hôm qua / 7 Ngày qua / Tháng này / Tháng trước / Xóa bộ lọc (`applyQuickRange()`). Dùng **"Hôm qua"** thay vì "Hôm nay" vì dữ liệu thành phẩm ở khối này thường được nhập/cập nhật muộn hơn 1 ngày so với ngày sản xuất thực tế — chọn "Hôm nay" sẽ hay ra rỗng hoặc thiếu dữ liệu.
 
 Nút bấm hiện "Tất cả trạm" khi chưa chọn gì, hiện thẳng tên khi chọn đúng 1 giá trị, hoặc "N đã chọn" khi chọn nhiều. Trong danh sách sổ xuống có nút "Chọn tất cả" / "Bỏ chọn" để thao tác nhanh.
 

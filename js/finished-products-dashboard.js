@@ -212,6 +212,19 @@ class FinishedProductsDashboard {
         this.applyFilters();
     }
 
+    // Bộ lọc nhanh: 'yesterday' | '7days' | 'thisMonth' | 'lastMonth' | 'reset'
+    // Dùng "Hôm qua" thay vì "Hôm nay" vì dữ liệu thành phẩm thường cập nhật muộn hơn 1 ngày.
+    applyQuickRange(preset) {
+        if (preset === 'reset') {
+            this.setDefaultDates();
+        } else {
+            const range = getQuickRange(preset);
+            document.getElementById('tp-filter-start').value = range.start;
+            document.getElementById('tp-filter-end').value = range.end;
+        }
+        this.onFilterChange();
+    }
+
     applyFilters() {
         const f = this.getDateRange();
 

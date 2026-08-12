@@ -50,6 +50,11 @@ function getQuickRange(preset) {
     if (preset === 'today') {
         return { start: toISO(today), end: toISO(today) };
     }
+    if (preset === 'yesterday') {
+        const y = new Date(today);
+        y.setDate(y.getDate() - 1);
+        return { start: toISO(y), end: toISO(y) };
+    }
     if (preset === '7days') {
         const from = new Date(today);
         from.setDate(from.getDate() - 6);

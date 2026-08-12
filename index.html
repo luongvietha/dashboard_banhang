@@ -330,7 +330,7 @@
             </div>
 
             <div class="chart-card dashboard-card" style="margin-top:32px;">
-                <h3 style="margin:0 0 20px;padding:0;border:none;">🏗️ Cân Bằng Vật Tư & Sản Lượng Theo Trạm</h3>
+                <h3 style="margin:0 0 20px;padding:0;border:none;">🏗️ Thành phẩm đầu ra theo các trạm nghiền</h3>
 
                 <div class="filters-container" style="margin-bottom:20px;">
                     <div class="filter-group">
@@ -353,6 +353,13 @@
                         <label>SP Đầu Vào</label>
                         <div id="tp-filter-spvao"></div>
                     </div>
+                </div>
+                <div class="quick-filters" style="margin-top:0;margin-bottom:20px;">
+                    <button onclick="finishedProductsDashboard.applyQuickRange('yesterday')">Hôm qua</button>
+                    <button onclick="finishedProductsDashboard.applyQuickRange('7days')">7 Ngày qua</button>
+                    <button onclick="finishedProductsDashboard.applyQuickRange('thisMonth')">Tháng này</button>
+                    <button onclick="finishedProductsDashboard.applyQuickRange('lastMonth')">Tháng trước</button>
+                    <button onclick="finishedProductsDashboard.applyQuickRange('reset')">Xóa bộ lọc</button>
                 </div>
 
                 <div class="kpi-row" style="margin-bottom:24px;">
