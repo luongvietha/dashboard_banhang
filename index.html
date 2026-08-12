@@ -21,6 +21,7 @@
     <nav class="main-nav">
         <button class="nav-btn active" id="nav-banhang" onclick="switchView('banhang')">📦 Bán Hàng</button>
         <button class="nav-btn" id="nav-sanxuat" onclick="switchView('sanxuat')">🏭 Sản Xuất</button>
+        <button class="nav-btn" id="nav-thanhpham" onclick="switchView('thanhpham')">🧱 Thành Phẩm</button>
     </nav>
 
     <div class="dashboard-wrapper view-section active" id="view-banhang">
@@ -312,108 +313,109 @@
                 <div class="pagination" id="sx-pagination"></div>
             </div>
 
-            <!-- ============ THÀNH PHẨM THEO TRẠM (bổ sung) ============ -->
-            <div class="table-card dashboard-card" style="margin-top:32px;">
-                <h3>🧱 Danh Mục Sản Phẩm Theo Trạm</h3>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Trạm</th>
-                                <th>Phân Loại Trạm</th>
-                                <th>Danh Mục Sản Phẩm Đầu Ra</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tp-station-products-body"></tbody>
-                    </table>
+            <div class="footer">
+                Cập nhật lần cuối: <span id="sx-update-time">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= DASHBOARD THÀNH PHẨM ================= -->
+    <div class="dashboard-wrapper view-section" id="view-thanhpham">
+        <header class="dashboard-header">
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>🧱 Dashboard Thành Phẩm</h1>
+                    <span id="tp-data-summary">Cập nhật: --</span>
+                </div>
+                <button class="refresh-btn" id="tp-refresh-btn" onclick="finishedProductsDashboard.fetchFromSheet()">
+                    <span>🔄 Cập nhật Dữ Liệu</span>
+                </button>
+            </div>
+
+            <div class="quick-filters">
+                <button onclick="finishedProductsDashboard.applyQuickRange('yesterday')">Hôm qua</button>
+                <button onclick="finishedProductsDashboard.applyQuickRange('7days')">7 Ngày qua</button>
+                <button onclick="finishedProductsDashboard.applyQuickRange('thisMonth')">Tháng này</button>
+                <button onclick="finishedProductsDashboard.applyQuickRange('lastMonth')">Tháng trước</button>
+                <button onclick="finishedProductsDashboard.applyQuickRange('reset')">Xóa bộ lọc</button>
+            </div>
+
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="tp-filter-start">Từ ngày</label>
+                    <input type="date" id="tp-filter-start" onchange="finishedProductsDashboard.onFilterChange()">
+                </div>
+                <div class="filter-group">
+                    <label for="tp-filter-end">Đến ngày</label>
+                    <input type="date" id="tp-filter-end" onchange="finishedProductsDashboard.onFilterChange()">
+                </div>
+                <div class="filter-group">
+                    <label>Trạm</label>
+                    <div id="tp-filter-tram"></div>
+                </div>
+                <div class="filter-group">
+                    <label>SP Đầu Ra</label>
+                    <div id="tp-filter-spra"></div>
+                </div>
+                <div class="filter-group">
+                    <label>SP Đầu Vào</label>
+                    <div id="tp-filter-spvao"></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            <div class="kpi-row" style="margin-bottom:24px;">
+                <div class="kpi-card dashboard-card">
+                    <div class="kpi-label">Tổng Đầu Vào (M³)</div>
+                    <div class="kpi-value" id="tp-kpi-vao">0</div>
+                </div>
+                <div class="kpi-card dashboard-card">
+                    <div class="kpi-label">Tổng Đầu Ra (M³)</div>
+                    <div class="kpi-value" id="tp-kpi-ra">0</div>
+                    <div class="kpi-subtext">Gồm cả sản phẩm đá và cát</div>
+                </div>
+                <div class="kpi-card dashboard-card">
+                    <div class="kpi-label">Sản Lượng TB/Ngày (M³)</div>
+                    <div class="kpi-value" id="tp-kpi-tbngay">0</div>
+                    <div class="kpi-subtext" id="tp-kpi-tbngay-sub"></div>
+                </div>
+                <div class="kpi-card dashboard-card">
+                    <div class="kpi-label">Số Trạm Vận Hành</div>
+                    <div class="kpi-value" id="tp-kpi-tram">0</div>
+                </div>
+                <div class="kpi-card dashboard-card">
+                    <div class="kpi-label">Số Lượt Sản Xuất</div>
+                    <div class="kpi-value" id="tp-kpi-luot">0</div>
                 </div>
             </div>
 
-            <div class="chart-card dashboard-card" style="margin-top:32px;">
-                <h3 style="margin:0 0 20px;padding:0;border:none;">🏗️ Thành phẩm đầu ra theo các trạm nghiền</h3>
-
-                <div class="filters-container" style="margin-bottom:20px;">
-                    <div class="filter-group">
-                        <label for="tp-filter-start">Từ ngày</label>
-                        <input type="date" id="tp-filter-start" onchange="finishedProductsDashboard.onFilterChange()">
-                    </div>
-                    <div class="filter-group">
-                        <label for="tp-filter-end">Đến ngày</label>
-                        <input type="date" id="tp-filter-end" onchange="finishedProductsDashboard.onFilterChange()">
-                    </div>
-                    <div class="filter-group">
-                        <label>Trạm</label>
-                        <div id="tp-filter-tram"></div>
-                    </div>
-                    <div class="filter-group">
-                        <label>SP Đầu Ra</label>
-                        <div id="tp-filter-spra"></div>
-                    </div>
-                    <div class="filter-group">
-                        <label>SP Đầu Vào</label>
-                        <div id="tp-filter-spvao"></div>
+            <div class="charts-grid">
+                <div class="chart-card dashboard-card">
+                    <h3>📈 Xu Hướng Sản Lượng Đầu Ra Theo Trạm</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="tp-chart-trend-tram"></canvas>
                     </div>
                 </div>
-                <div class="quick-filters" style="margin-top:0;margin-bottom:20px;">
-                    <button onclick="finishedProductsDashboard.applyQuickRange('yesterday')">Hôm qua</button>
-                    <button onclick="finishedProductsDashboard.applyQuickRange('7days')">7 Ngày qua</button>
-                    <button onclick="finishedProductsDashboard.applyQuickRange('thisMonth')">Tháng này</button>
-                    <button onclick="finishedProductsDashboard.applyQuickRange('lastMonth')">Tháng trước</button>
-                    <button onclick="finishedProductsDashboard.applyQuickRange('reset')">Xóa bộ lọc</button>
-                </div>
-
-                <div class="kpi-row" style="margin-bottom:24px;">
-                    <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Tổng Đầu Vào (M³)</div>
-                        <div class="kpi-value" id="tp-kpi-vao">0</div>
-                    </div>
-                    <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Tổng Đầu Ra (M³)</div>
-                        <div class="kpi-value" id="tp-kpi-ra">0</div>
-                        <div class="kpi-subtext">Gồm cả sản phẩm đá và cát</div>
-                    </div>
-                    <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Sản Lượng TB/Ngày (M³)</div>
-                        <div class="kpi-value" id="tp-kpi-tbngay">0</div>
-                        <div class="kpi-subtext" id="tp-kpi-tbngay-sub"></div>
-                    </div>
-                    <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Số Trạm Vận Hành</div>
-                        <div class="kpi-value" id="tp-kpi-tram">0</div>
-                    </div>
-                    <div class="kpi-card dashboard-card">
-                        <div class="kpi-label">Số Lượt Sản Xuất</div>
-                        <div class="kpi-value" id="tp-kpi-luot">0</div>
+                <div class="chart-card dashboard-card">
+                    <h3>📈 Xu Hướng Sản Lượng Theo Sản Phẩm</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="tp-chart-trend-sp"></canvas>
                     </div>
                 </div>
+            </div>
 
-                <div class="charts-grid">
-                    <div class="chart-card dashboard-card">
-                        <h3>📈 Xu Hướng Sản Lượng Đầu Ra Theo Trạm</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="tp-chart-trend-tram"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card dashboard-card">
-                        <h3>📈 Xu Hướng Sản Lượng Theo Sản Phẩm</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="tp-chart-trend-sp"></canvas>
-                        </div>
+            <div class="charts-grid">
+                <div class="chart-card dashboard-card">
+                    <h3>🥧 Cơ Cấu Sản Lượng Đầu Ra</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="tp-chart-product"></canvas>
                     </div>
                 </div>
-
-                <div class="charts-grid">
-                    <div class="chart-card dashboard-card">
-                        <h3>🥧 Cơ Cấu Sản Lượng Đầu Ra</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="tp-chart-product"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card dashboard-card">
-                        <h3>🥧 Cơ Cấu Nguyên Liệu Đầu Vào</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="tp-chart-input"></canvas>
-                        </div>
+                <div class="chart-card dashboard-card">
+                    <h3>🥧 Cơ Cấu Nguyên Liệu Đầu Vào</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="tp-chart-input"></canvas>
                     </div>
                 </div>
             </div>
@@ -440,8 +442,24 @@
                 </div>
             </div>
 
+            <div class="table-card dashboard-card" style="margin-top:32px;">
+                <h3>🧱 Danh Mục Sản Phẩm Theo Trạm</h3>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Trạm</th>
+                                <th>Phân Loại Trạm</th>
+                                <th>Danh Mục Sản Phẩm Đầu Ra</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tp-station-products-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="footer">
-                Cập nhật lần cuối: <span id="sx-update-time">--</span>
+                Cập nhật lần cuối: <span id="tp-update-time">--</span>
             </div>
         </div>
     </div>

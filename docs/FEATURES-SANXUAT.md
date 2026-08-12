@@ -1,17 +1,17 @@
-# ✨ Tính Năng — Tab Sản Xuất
+# ✨ Tính Năng — Tab Sản Xuất & Tab Thành Phẩm
 
-Tab này gồm 2 khối độc lập, dùng 3 sheet nguồn khác nhau:
+Trước đây 2 khối bên dưới cùng nằm trong 1 tab "Sản Xuất". Nay đã tách thành **2 tab riêng** trên `.main-nav` (`#view-sanxuat` và `#view-thanhpham`) để gọn giao diện — mỗi tab có bộ lọc/quick-filter/nút cập nhật độc lập, dùng 3 sheet nguồn khác nhau:
 
-1. **Dashboard Sản Xuất** (`js/production-dashboard.js`) — dữ liệu **chuyến xe** (mỗi dòng = 1 chuyến vận chuyển). Dùng cho: tổng khối lượng vận chuyển, top trạm, phân bố sản phẩm, và **phân tích theo ca làm việc** (chỉ sheet này có cột Ca).
-2. **Đầu Vào / Đầu Ra Theo Trạm** (`js/finished-products-dashboard.js`) — dữ liệu **công thức sản xuất theo lô** (mỗi dòng = 1 lượt sản xuất, có cả khối lượng nguyên liệu vào và khối lượng từng sản phẩm ra trong cùng 1 dòng). Dùng cho: khối lượng đầu vào/đầu ra, hiệu suất, năng lực sản xuất, biến thiên theo trạm/sản phẩm.
+1. **Tab 🏭 Sản Xuất** (`js/production-dashboard.js`) — dữ liệu **chuyến xe** (mỗi dòng = 1 chuyến vận chuyển). Dùng cho: tổng khối lượng vận chuyển, top trạm, phân bố sản phẩm, và **phân tích theo ca làm việc** (chỉ sheet này có cột Ca).
+2. **Tab 🧱 Thành Phẩm** (`js/finished-products-dashboard.js`) — dữ liệu **công thức sản xuất theo lô** (mỗi dòng = 1 lượt sản xuất, có cả khối lượng nguyên liệu vào và khối lượng từng sản phẩm ra trong cùng 1 dòng). Dùng cho: khối lượng đầu vào/đầu ra, hiệu suất, năng lực sản xuất, biến thiên theo trạm/sản phẩm.
 
 **Vì sao tách riêng:** ban đầu khối lượng đầu vào/đầu ra và hiệu suất được tính từ sheet chuyến xe (dựa vào tag `(kho: NK)`/`(kho: TP)` trong tên sản phẩm), nhưng cách này sai lệch — sheet chuyến xe không map 1:1 với từng lô sản xuất (xe chở có thể trễ/sớm hơn thời điểm sản xuất thực tế), và **không ghi nhận đủ mã sản phẩm đầu ra của trạm cát** (C1, C3) dưới dạng phân biệt được, nên "tổng đầu ra" tính từ sheet đó bị thiếu, không phản ánh đúng tổng của cả đá và cát. Sheet công thức sản xuất theo lô không có vấn đề này vì khối lượng vào/ra nằm ngay trên cùng 1 dòng theo đúng tỉ lệ quy đổi thật của trạm.
 
 ---
 
-# 1. Dashboard Sản Xuất (chuyến xe)
+# 1. Tab Sản Xuất (chuyến xe)
 
-File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vùng HTML: đầu `#view-sanxuat` trong `index.html`
+File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vùng HTML: `#view-sanxuat` trong `index.html`
 
 ## KPI Cards
 
@@ -63,9 +63,9 @@ Không tự fetch khi trang vừa load — chỉ fetch lần đầu khi bấm v�
 
 ---
 
-# 2. Thành phẩm đầu ra theo các trạm nghiền
+# 2. Tab Thành Phẩm (Thành phẩm đầu ra theo các trạm nghiền)
 
-File logic: [`js/finished-products-dashboard.js`](../js/finished-products-dashboard.js) · Vùng HTML: cuối `#view-sanxuat`, dưới bảng chi tiết của khối 1
+File logic: [`js/finished-products-dashboard.js`](../js/finished-products-dashboard.js) · Vùng HTML: `#view-thanhpham` trong `index.html` (tab riêng, không còn nằm trong `#view-sanxuat`)
 
 ## Nguồn dữ liệu — 2 sheet "công thức sản xuất theo lô"
 
@@ -132,4 +132,4 @@ Cùng quy ước dấu phẩy thập phân kiểu Việt Nam (`parseVNNumber()`,
 
 ## Tải dữ liệu
 
-Lazy-load: chỉ fetch khi vào tab "🏭 Sản Xuất" lần đầu (`finishedProductsDashboard.loaded`, kích hoạt cùng lúc với `prodDashboard` trong `switchView()`).
+Lazy-load: chỉ fetch khi vào tab "🧱 Thành Phẩm" lần đầu (`finishedProductsDashboard.loaded`, kích hoạt riêng trong `switchView()`, độc lập với `prodDashboard`). Nút "🔄 Cập nhật Dữ Liệu" trên header tab này fetch lại bất cứ lúc nào.

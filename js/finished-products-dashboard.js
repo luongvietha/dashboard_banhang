@@ -20,6 +20,9 @@ class FinishedProductsDashboard {
     }
 
     async fetchFromSheet() {
+        const btn = document.getElementById('tp-refresh-btn');
+        if (btn) btn.classList.add('loading');
+
         try {
             const [resDa, resCat] = await Promise.all([fetch(SHEET_URL_TRAMDA), fetch(SHEET_URL_TRAMCAT)]);
             if (!resDa.ok || !resCat.ok) throw new Error('Không thể tải dữ liệu thành phẩm từ Google Sheet');
@@ -49,10 +52,14 @@ class FinishedProductsDashboard {
             this.initFilters();
             this.loaded = true;
             this.applyFilters();
+            const timeEl = document.getElementById('tp-update-time');
+            if (timeEl) timeEl.textContent = new Date().toLocaleString('vi-VN');
         } catch (error) {
             console.error('Lỗi tải dữ liệu thành phẩm:', error);
             const el = document.getElementById('tp-station-products-body');
             if (el) el.innerHTML = `<tr><td colspan="3">Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+        } finally {
+            if (btn) btn.classList.remove('loading');
         }
     }
 
