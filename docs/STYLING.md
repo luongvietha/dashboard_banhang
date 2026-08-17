@@ -1,6 +1,6 @@
 # 🎨 Styling Guide
 
-Toàn bộ giao diện nằm trong 1 file: [`css/styles.css`](../css/styles.css). Cả 2 tab (Bán Hàng, Sản Xuất) dùng chung file này vì layout giống hệt nhau, chỉ khác nội dung/id.
+Toàn bộ giao diện nằm trong 1 file: [`css/styles.css`](../css/styles.css). Cả 3 tab (Bán Hàng, Sản Xuất, Thành Phẩm) dùng chung file này vì layout giống hệt nhau, chỉ khác nội dung/id.
 
 ---
 
@@ -12,11 +12,11 @@ Toàn bộ giao diện nằm trong 1 file: [`css/styles.css`](../css/styles.css)
 --primary: #2D7A3E;        /* Xanh lá chính — header border, nút, số KPI */
 --primary-light: #4CAF50;  /* Xanh lá nhạt hơn — hover pagination */
 --primary-dark: #1B5E20;   /* Xanh lá đậm — tiêu đề, giá trị KPI */
---bg-primary: #f5f5f5;     /* Nền tổng thể trang */
+--bg-primary: #F8FAFC;     /* Nền tổng thể trang */
 --bg-card: #ffffff;        /* Nền các card (không dùng trực tiếp, để dự phòng) */
---text-dark: #212529;      /* Màu chữ chính */
---text-muted: #6c757d;     /* Màu chữ phụ (label, subtext) */
---border-color: #e0e0e0;   /* Màu viền, đường phân cách */
+--text-dark: #1E293B;      /* Màu chữ chính */
+--text-muted: #64748B;     /* Màu chữ phụ (label, subtext) */
+--border-color: #E2E8F0;   /* Màu viền, đường phân cách */
 --gap: 20px;                /* Khoảng cách chuẩn giữa các khối */
 --radius: 8px;              /* Bo góc chuẩn cho card */
 ```
@@ -29,7 +29,7 @@ Toàn bộ giao diện nằm trong 1 file: [`css/styles.css`](../css/styles.css)
 
 | Class | Dùng cho |
 |---|---|
-| `.dashboard-wrapper` | Bọc ngoài toàn bộ 1 tab (Bán Hàng hoặc Sản Xuất) |
+| `.dashboard-wrapper` | Bọc ngoài toàn bộ 1 tab (Bán Hàng, Sản Xuất, hoặc Thành Phẩm) |
 | `.dashboard-header` | Phần header trên cùng: tiêu đề, nút cập nhật, filter |
 | `.filters-container` / `.filter-group` | Khu vực bộ lọc |
 | `.kpi-row` / `.kpi-card` | 4 thẻ KPI đầu trang |
@@ -38,16 +38,29 @@ Toàn bộ giao diện nằm trong 1 file: [`css/styles.css`](../css/styles.css)
 | `.status-message` | Thông báo thành công/lỗi khi cập nhật dữ liệu |
 | `.footer` | Dòng "Cập nhật lần cuối" |
 
-## Menu điều hướng (thêm khi tách 2 tab)
+## Menu điều hướng (3 tab)
 
 ```css
-.main-nav      /* thanh menu trên cùng, chứa 2 nút */
+.main-nav      /* thanh menu trên cùng, chứa 3 nút */
 .nav-btn       /* 1 nút menu — có/không class .active */
 .view-section  /* bọc ngoài mỗi tab — mặc định display:none */
 .view-section.active  /* tab đang được chọn — display:block */
 ```
 
-`switchView()` trong `js/app.js` chỉ toggle class `.active` trên `.nav-btn` và `.view-section` tương ứng — không có logic ẩn/hiện nào khác trong CSS ngoài 2 rule này.
+`switchView()` trong `js/app.js` chỉ toggle class `.active` trên `.nav-btn` và `.view-section` tương ứng — không có logic ẩn/hiện nào khác trong CSS ngoài 2 rule này. Thêm tab mới → thêm 1 cặp `.nav-btn`/`.view-section` mới, không cần sửa CSS.
+
+## Multi-select (dropdown checkbox nhiều lựa chọn)
+
+Style cho component `MultiSelect` (`js/utils.js`), dùng ở bộ lọc Trạm/Sản phẩm/Xe/Ca (Sản Xuất) và Trạm/SP Đầu Ra/SP Đầu Vào (Thành Phẩm):
+
+```css
+.multiselect          /* container chính, position:relative */
+.multiselect-btn       /* nút hiện trạng thái đã chọn ("Tất cả trạm" / tên / "N đã chọn") */
+.multiselect-list      /* popover sổ xuống chứa checkbox */
+.multiselect-actions   /* nút "Chọn tất cả" / "Bỏ chọn" trong popover */
+.multiselect-item      /* 1 dòng checkbox */
+.multiselect-empty     /* hiện khi danh sách lựa chọn rỗng */
+```
 
 ---
 

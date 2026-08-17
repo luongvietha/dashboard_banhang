@@ -1,6 +1,6 @@
 # 🔧 Setup Guide
 
-Dashboard dùng 2 tab dữ liệu, mỗi tab đọc từ 1 sheet (tab) riêng trong cùng 1 Google Sheets file.
+Dashboard có 3 tab dữ liệu (Bán Hàng, Sản Xuất, Thành Phẩm), đọc từ nhiều sheet (tab) khác nhau trong cùng 1 Google Sheets file — Bán Hàng gộp từ 2 sheet, Sản Xuất từ 1 sheet, Thành Phẩm từ 2 sheet (Trạm Đá + Trạm Cát).
 
 ---
 
@@ -34,10 +34,14 @@ Dashboard dùng 2 tab dữ liệu, mỗi tab đọc từ 1 sheet (tab) riêng tr
 | TỔNG KHỐI LƯỢNG (m3) | Tổng khối lượng, dùng dấu phẩy thập phân | 310,0 |
 | GHI CHÚ | Ghi chú (tùy chọn) | |
 
+### Sheet Thành Phẩm (Trạm Đá / Trạm Cát)
+
+2 sheet dạng **"rộng"** riêng biệt (mỗi dòng = 1 lô sản xuất, nhiều cặp cột Mã/Khối Lượng trên cùng 1 dòng thay vì 1 dòng/sản phẩm) — cấu trúc khác hẳn 2 sheet ở trên nên không liệt kê bảng cột ở đây. Chi tiết cấu trúc cột (theo chỉ số 0-based, không theo tên) và ý nghĩa từng sheet xem [`FEATURES-THANHPHAM.md`](FEATURES-THANHPHAM.md#nguồn-dữ-liệu--2-sheet-công-thức-sản-xuất-theo-lô). Nếu đổi cấu trúc cột của 2 sheet này, phải sửa `inputPairs`/`outputPairs` trong `js/finished-products-dashboard.js` (hàm `fetchFromSheet()`), không chỉ đổi link.
+
 **Lưu ý chung:**
-- Hàng đầu tiên phải là tên cột (header)
+- Hàng đầu tiên phải là tên cột (header) — riêng 2 sheet Thành Phẩm có 2 dòng tiêu đề (dòng nhóm cột gộp + dòng tên cột), code tự bỏ qua 2 dòng đầu
 - Không để hàng trống xen giữa dữ liệu
-- Cột số của sheet Bán Hàng dùng dấu chấm thập phân bình thường; cột khối lượng của sheet Sản Xuất dùng **dấu phẩy** kiểu Việt Nam (vd `310,0`) — code đã tự xử lý việc này trong `production-dashboard.js` (hàm `parseVNNumber`)
+- Cột số của sheet Bán Hàng dùng dấu chấm thập phân bình thường; cột khối lượng của sheet Sản Xuất và Thành Phẩm dùng **dấu phẩy** kiểu Việt Nam (vd `310,0`) — code đã tự xử lý việc này (hàm `parseVNNumber` trong từng file)
 - Tên cột của sheet Sản Xuất không cần khớp tuyệt đối 100% (code tự dò cột theo từ khóa), nhưng nên giữ đúng các từ khóa: NGÀY, TÊN TRẠM, Sản Phẩm, BIỂN SỐ, SỐ CHUYẾN, TỔNG KHỐI LƯỢNG
 
 ---
@@ -61,19 +65,27 @@ Dashboard dùng 2 tab dữ liệu, mỗi tab đọc từ 1 sheet (tab) riêng tr
 
 ## 3. Cập nhật link Sheet trong code
 
-**Sheet Bán Hàng** — mở file `js/sales-dashboard.js`, dòng đầu tiên:
+**Sheet Bán Hàng** — mở file `js/sales-dashboard.js`, đầu file. Dữ liệu được **gộp từ 2 gid** rồi lọc trùng theo `MaPhieuBanHang` (lý do: dữ liệu cũ nằm ở 1 sheet, dữ liệu bổ sung nằm ở sheet khác):
 
 ```javascript
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv';
+const SHEET_URL_MAIN = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=618992108';
+const SHEET_URL_SUPPLEMENT = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=1674192120';
 ```
 
-**Sheet Sản Xuất** — mở file `js/production-dashboard.js`, dòng đầu tiên:
+**Sheet Sản Xuất (chuyến xe)** — mở file `js/production-dashboard.js`, dòng đầu tiên:
 
 ```javascript
 const SHEET_URL_SANXUAT = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=1120375259';
 ```
 
-Thay `SHEET_ID` và `gid` tương ứng nếu bạn đổi sang Sheet khác.
+**Sheet Thành Phẩm (Trạm Đá / Trạm Cát)** — mở file `js/finished-products-dashboard.js`, đầu file:
+
+```javascript
+const SHEET_URL_TRAMDA = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=1255295556';
+const SHEET_URL_TRAMCAT = 'https://docs.google.com/spreadsheets/d/1FejLW-ATQVmbGp9g0jy1WSyke5J5oP15x3jgw2LWyvs/export?format=csv&gid=18320018';
+```
+
+Thay `SHEET_ID` và `gid` tương ứng nếu bạn đổi sang Sheet khác. Muốn biết gid của 1 tab: mở tab đó trong Google Sheets, xem số sau `gid=` trên URL trình duyệt.
 
 ---
 
@@ -96,8 +108,9 @@ Link hiện tại: **https://luongvietha.github.io/dashboard_banhang/**
 
 - [ ] Mở link dashboard, trang load được
 - [ ] Tab "📦 Bán Hàng": KPI + 4 biểu đồ + bảng có dữ liệu
-- [ ] Tab "🏭 Sản Xuất": bấm vào tab, dữ liệu tự tải, KPI + 4 biểu đồ + bảng có dữ liệu
-- [ ] Đổi bộ lọc ngày/khách/sản phẩm/trạm/xe — các dropdown khác tự thu hẹp theo (lọc chéo)
+- [ ] Tab "🏭 Sản Xuất": bấm vào tab, dữ liệu tự tải, KPI + 4 biểu đồ + bảng Tổng Hợp Theo Loại Trạm có dữ liệu
+- [ ] Tab "🧱 Thành Phẩm": bấm vào tab, dữ liệu tự tải, KPI + 4 biểu đồ + bảng Tổng Hợp Theo Loại Trạm + bảng Báo Cáo Hiệu Suất có dữ liệu
+- [ ] Đổi bộ lọc ngày/khách/sản phẩm/trạm/xe — các ô lọc khác tự thu hẹp theo (lọc chéo, multi-select)
 - [ ] Nút "🔄 Cập nhật Dữ Liệu" ở mỗi tab hoạt động, không báo lỗi
 
 ---
@@ -106,7 +119,7 @@ Link hiện tại: **https://luongvietha.github.io/dashboard_banhang/**
 
 **Lỗi "Failed to fetch" / không tải được dữ liệu:**
 - Kiểm tra Sheet đã share **"Anyone with the link" → Viewer** chưa
-- Kiểm tra Sheet ID / gid trong `js/sales-dashboard.js` hoặc `js/production-dashboard.js` đúng chưa
+- Kiểm tra Sheet ID / gid trong `js/sales-dashboard.js`, `js/production-dashboard.js`, hoặc `js/finished-products-dashboard.js` đúng chưa
 
 **Không thấy dữ liệu dù đã share đúng:**
 - Kiểm tra tên cột trong Sheet có khớp với bảng ở mục 1 không
@@ -114,7 +127,10 @@ Link hiện tại: **https://luongvietha.github.io/dashboard_banhang/**
 
 **CSS không load / dashboard bị vỡ layout:**
 - Kiểm tra `css/styles.css` có tồn tại đúng đường dẫn `css/styles.css` không
-- Kiểm tra `index.html` có dòng `<link rel="stylesheet" href="css/styles.css">` trong `<head>`
+- Kiểm tra `index.html` có dòng `<link rel="stylesheet" href="css/styles.css?v=...">` trong `<head>`
 
-**Tab Sản Xuất không tự tải dữ liệu:**
-- Dữ liệu Sản Xuất chỉ tải khi bấm vào tab lần đầu (lazy-load, xem `js/app.js` → `switchView()`) — đây là hành vi cố ý để trang load nhanh hơn, không phải lỗi
+**Tab Sản Xuất / Thành Phẩm không tự tải dữ liệu:**
+- Dữ liệu 2 tab này chỉ tải khi bấm vào tab lần đầu (lazy-load, xem `js/app.js` → `switchView()`) — đây là hành vi cố ý để trang load nhanh hơn, không phải lỗi
+
+**Sửa xong không thấy thay đổi khi mở lại trang:**
+- Trình duyệt có thể đang cache `index.html`/`css`/`js` cũ — `index.html` đã gắn query-string version (`?v=yyyymmddX`) vào mọi link CSS/script để tránh việc này; nếu vẫn không thấy thay đổi, tăng số version đó lên rồi thử lại

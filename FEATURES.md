@@ -4,5 +4,6 @@ Nội dung file này đã được tách theo từng tab và chuyển sang thư 
 
 - [`docs/FEATURES-BANHANG.md`](docs/FEATURES-BANHANG.md) — tính năng tab 📦 Bán Hàng
 - [`docs/FEATURES-SANXUAT.md`](docs/FEATURES-SANXUAT.md) — tính năng tab 🏭 Sản Xuất
+- [`docs/FEATURES-THANHPHAM.md`](docs/FEATURES-THANHPHAM.md) — tính năng tab 🧱 Thành Phẩm
 
 Xem thêm [`README.md`](README.md) để có bảng liên kết đầy đủ tới toàn bộ tài liệu.

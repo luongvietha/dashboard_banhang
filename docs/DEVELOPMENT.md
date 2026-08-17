@@ -1,6 +1,6 @@
 # 🔧 Development Guide
 
-Trước khi sửa, xem [`ARCHITECTURE.md`](ARCHITECTURE.md) để biết file nào chịu trách nhiệm gì. Quy tắc chung: **sửa CSS → `css/styles.css`**, **sửa logic Bán Hàng → `js/sales-dashboard.js`**, **sửa logic Sản Xuất → `js/production-dashboard.js`**, **sửa cấu trúc HTML → `index.html`**.
+Trước khi sửa, xem [`ARCHITECTURE.md`](ARCHITECTURE.md) để biết file nào chịu trách nhiệm gì. Quy tắc chung: **sửa CSS → `css/styles.css`**, **sửa logic Bán Hàng → `js/sales-dashboard.js`**, **sửa logic Sản Xuất (chuyến xe) → `js/production-dashboard.js`**, **sửa logic Thành Phẩm (đầu vào/ra, hiệu suất) → `js/finished-products-dashboard.js`**, **sửa cấu trúc HTML → `index.html`**, **tiện ích dùng chung (format số, MultiSelect, bộ lọc nhanh) → `js/utils.js`**.
 
 ---
 
@@ -33,7 +33,9 @@ this.populateSelect('filter-nhanvien',
 ```
 - Trong `applyFilters()`: thêm điều kiện lọc tương ứng (giống `getFilteredData` nhưng không có excludeKeys)
 
-Áp dụng tương tự cho tab Sản Xuất, chỉ thay file thành `js/production-dashboard.js` và các id filter là `sx-filter-...`.
+Áp dụng tương tự cho tab Sản Xuất (`js/production-dashboard.js`, id `sx-filter-...`) hoặc tab Thành Phẩm (`js/finished-products-dashboard.js`, id `tp-filter-...`).
+
+Nếu filter cần **chọn nhiều giá trị cùng lúc** (multi-select, như Trạm/Sản phẩm/Xe/Ca ở tab Sản Xuất và Thành Phẩm) thay vì `<select>` đơn: dùng `class MultiSelect` trong `js/utils.js` — xem cách khởi tạo trong `initFilters()` và `updateFacetOptions()` của `production-dashboard.js` hoặc `finished-products-dashboard.js` làm mẫu, thay vì `populateSelect()`.
 
 ---
 
@@ -85,13 +87,16 @@ Luôn nhớ gọi `.destroy()` chart cũ trước khi tạo mới (tránh chart 
 
 ---
 
-## 4. Thêm tab (dashboard) thứ 3
+## 4. Thêm tab (dashboard) mới
 
-1. Tạo `js/xxx-dashboard.js` theo khuôn class của `production-dashboard.js` (copy làm mẫu, đổi tên field/id)
-2. Thêm 1 khối `<div class="dashboard-wrapper view-section" id="view-xxx">...</div>` trong `index.html`
+Dashboard hiện có 3 tab (Bán Hàng, Sản Xuất, Thành Phẩm) theo đúng khuôn mẫu này — `js/finished-products-dashboard.js` + `#view-thanhpham` là ví dụ thực tế gần nhất, tham khảo trực tiếp file đó thay vì làm từ đầu.
+
+1. Tạo `js/xxx-dashboard.js` theo khuôn class của `finished-products-dashboard.js` hoặc `production-dashboard.js` (copy làm mẫu, đổi tên field/id)
+2. Thêm 1 khối `<div class="dashboard-wrapper view-section" id="view-xxx">...</div>` trong `index.html`, với header riêng (nút "🔄 Cập nhật Dữ Liệu", bộ lọc nhanh, filters-container) — xem `#view-thanhpham` làm mẫu
 3. Thêm 1 nút nav: `<button class="nav-btn" id="nav-xxx" onclick="switchView('xxx')">...</button>`
-4. Cập nhật `switchView()` trong `js/app.js` để toggle thêm section/nav mới, và khởi tạo `const xxxDashboard = new XxxDashboard();`
-5. Thêm `<script src="js/xxx-dashboard.js"></script>` vào `index.html` trước `app.js`
+4. Cập nhật `switchView()` trong `js/app.js` để toggle thêm section/nav mới, trigger lazy-load fetch riêng nếu `!xxxDashboard.loaded`, và khởi tạo `const xxxDashboard = new XxxDashboard();`
+5. Thêm `<script src="js/xxx-dashboard.js?v=...">` vào `index.html` trước `app.js` (sau `utils.js`, vì hầu hết dashboard đều cần `MultiSelect`/`getQuickRange`/`formatSmartNumber`)
+6. Tăng số version (`?v=yyyymmddX`) ở mọi thẻ `<link>`/`<script>` trong `index.html` để trình duyệt không dùng cache cũ
 
 ---
 
@@ -99,8 +104,8 @@ Luôn nhớ gọi `.destroy()` chart cũ trước khi tạo mới (tránh chart 
 
 - [ ] Mở `index.html` bằng Chrome (double-click hoặc kéo vào trình duyệt)
 - [ ] F12 → Console: không có lỗi đỏ
-- [ ] Cả 2 tab load được, chuyển tab mượt
-- [ ] Filter lọc chéo hoạt động đúng ở cả 2 tab
+- [ ] Cả 3 tab load được, chuyển tab mượt
+- [ ] Filter lọc chéo hoạt động đúng ở cả 3 tab (kể cả multi-select ở tab Sản Xuất/Thành Phẩm)
 - [ ] Sort bảng, phân trang hoạt động
 - [ ] Nút "Cập nhật Dữ Liệu" chạy được, không lỗi
 - [ ] Responsive: thu nhỏ cửa sổ / F12 → Device mode, kiểm tra mobile
@@ -108,10 +113,10 @@ Luôn nhớ gọi `.destroy()` chart cũ trước khi tạo mới (tránh chart 
 ## Naming convention
 
 - Function/method: `camelCase` (`getFilteredData`)
-- Hằng số cấu hình: `UPPER_CASE` (`SHEET_URL`, `SHEET_URL_SANXUAT`)
-- id/class trong HTML: `kebab-case` (`filter-start`, `sx-kpi-tram`)
-- Class JS: `PascalCase` (`Dashboard`, `ProductionDashboard`)
-- Tab Sản Xuất luôn tiền tố `sx-` cho id để không đụng với tab Bán Hàng
+- Hằng số cấu hình: `UPPER_CASE` (`SHEET_URL_MAIN`, `SHEET_URL_SANXUAT`, `SHEET_URL_TRAMDA`)
+- id/class trong HTML: `kebab-case` (`filter-start`, `sx-kpi-tram`, `tp-kpi-vao`)
+- Class JS: `PascalCase` (`Dashboard`, `ProductionDashboard`, `FinishedProductsDashboard`, `MultiSelect`)
+- Tab Sản Xuất luôn tiền tố `sx-` cho id, tab Thành Phẩm luôn tiền tố `tp-` — để không đụng id giữa các tab
 
 ## Common issues & fixes
 
@@ -124,7 +129,8 @@ Luôn nhớ gọi `.destroy()` chart cũ trước khi tạo mới (tránh chart 
 
 ## Roadmap
 
+- [x] Thêm tab thứ 3 (🧱 Thành Phẩm — đầu vào/ra, hiệu suất, năng suất theo trạm)
 - [ ] Export dữ liệu ra Excel/CSV
 - [ ] Dark mode
 - [ ] So sánh kỳ trước (YoY / MoM)
-- [ ] Thêm tab thứ 3 (vd Công nợ, Kho)
+- [ ] Thêm tab thứ 4 (vd Công nợ, Kho)
