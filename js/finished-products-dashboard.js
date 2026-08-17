@@ -244,9 +244,44 @@ class FinishedProductsDashboard {
         this.filteredInputRows = this.inputRows.filter(r => this.inRange(r.ngayISO, f) && this.matchSel(this.msTram, r.tenTram) && this.matchSel(this.msSpVao, r.maNguyenLieu));
 
         this.renderKPIs();
+        this.renderLoaiTramSummary();
         this.renderTrendCharts();
         this.renderDistributionCharts();
         this.renderCapacityTable();
+    }
+
+    // Tổng hợp Đầu Vào/Đầu Ra/Hiệu Suất bình quân tách riêng theo LOẠI TRẠM (Đá / Cát) — cùng
+    // nguồn (filteredLots, chỉ lọc theo ngày + trạm) và cùng công thức hiệu suất (tổng ra ÷ tổng vào)
+    // với bảng "Báo Cáo Hiệu Suất Vận Hành Theo Trạm", chỉ khác là gộp theo nhóm thay vì từng trạm.
+    renderLoaiTramSummary() {
+        const body = document.getElementById('tp-loaitram-body');
+        if (!body) return;
+
+        const groups = {};
+        this.filteredLots.forEach(l => {
+            if (!groups[l.loaiTram]) groups[l.loaiTram] = { vao: 0, ra: 0, trams: new Set(), luot: 0 };
+            const g = groups[l.loaiTram];
+            g.vao += l.khoiLuongVao;
+            g.ra += l.khoiLuongRa;
+            g.luot++;
+            if (l.tenTram) g.trams.add(l.tenTram);
+        });
+
+        const order = ['Đá', 'Cát', 'Khác'];
+        const rows = order.filter(k => groups[k]).map(loai => {
+            const g = groups[loai];
+            const hieuSuat = g.vao > 0 ? (g.ra / g.vao * 100) : null;
+            return `<tr>
+                <td>${loai}</td>
+                <td>${g.trams.size}</td>
+                <td>${formatSmartNumber(g.vao, 'volume')}</td>
+                <td>${formatSmartNumber(g.ra, 'volume')}</td>
+                <td>${hieuSuat === null ? '--' : hieuSuat.toFixed(1) + '%'}</td>
+                <td>${g.luot.toLocaleString('vi-VN')}</td>
+            </tr>`;
+        });
+
+        body.innerHTML = rows.join('') || '<tr><td colspan="6">Không có dữ liệu trong khoảng lọc hiện tại</td></tr>';
     }
 
     renderKPIs() {

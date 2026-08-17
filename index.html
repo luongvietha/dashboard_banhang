@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/styles.css?v=20260812c">
+    <link rel="stylesheet" href="css/styles.css?v=20260812d">
 </head>
 
 <body>
@@ -207,28 +207,20 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="sx-filter-tram">Trạm</label>
-                    <select id="sx-filter-tram" onchange="prodDashboard.onFilterChange()">
-                        <option value="all">Tất cả trạm</option>
-                    </select>
+                    <label>Trạm</label>
+                    <div id="sx-filter-tram"></div>
                 </div>
                 <div class="filter-group">
-                    <label for="sx-filter-sanpham">Sản phẩm</label>
-                    <select id="sx-filter-sanpham" onchange="prodDashboard.onFilterChange()">
-                        <option value="all">Tất cả</option>
-                    </select>
+                    <label>Sản phẩm</label>
+                    <div id="sx-filter-sanpham"></div>
                 </div>
                 <div class="filter-group">
-                    <label for="sx-filter-xe">Xe</label>
-                    <select id="sx-filter-xe" onchange="prodDashboard.onFilterChange()">
-                        <option value="all">Tất cả xe</option>
-                    </select>
+                    <label>Xe</label>
+                    <div id="sx-filter-xe"></div>
                 </div>
                 <div class="filter-group">
-                    <label for="sx-filter-ca">Ca</label>
-                    <select id="sx-filter-ca" onchange="prodDashboard.onFilterChange()">
-                        <option value="all">Tất cả ca</option>
-                    </select>
+                    <label>Ca</label>
+                    <div id="sx-filter-ca"></div>
                 </div>
             </div>
         </header>
@@ -255,6 +247,26 @@
                     <div class="kpi-label">Ca Vận Hành</div>
                     <div class="kpi-value" id="sx-kpi-ca">0</div>
                     <div class="kpi-subtext">Số ca làm việc có phát sinh dữ liệu (không tính "Không rõ ca")</div>
+                </div>
+            </div>
+
+            <!-- Tổng hợp theo loại trạm (Đá / Cát) -->
+            <div class="table-card dashboard-card">
+                <h3>📊 Tổng Hợp Theo Loại Trạm (Đá / Cát)</h3>
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Sản lượng vận chuyển tách riêng theo nhóm trạm, tính trên dữ liệu đang lọc.</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Loại Trạm</th>
+                                <th>Số Trạm</th>
+                                <th>Tổng Sản Lượng (m³)</th>
+                                <th>Số Chuyến</th>
+                                <th>% Trên Tổng Sản Lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sx-loaitram-body"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -390,6 +402,27 @@
                 </div>
             </div>
 
+            <!-- Tổng hợp theo loại trạm (Đá / Cát) -->
+            <div class="table-card dashboard-card">
+                <h3>📊 Tổng Hợp Theo Loại Trạm (Đá / Cát)</h3>
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Đầu vào/đầu ra và hiệu suất bình quân tách riêng theo nhóm trạm (tính trên toàn bộ lô trong khoảng ngày + trạm đang lọc, không phụ thuộc bộ lọc SP Đầu Ra/Đầu Vào — giống bảng Báo Cáo Hiệu Suất bên dưới).</p>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Loại Trạm</th>
+                                <th>Số Trạm</th>
+                                <th>Tổng Đầu Vào (m³)</th>
+                                <th>Tổng Đầu Ra (m³)</th>
+                                <th>Hiệu Suất Bình Quân (%)</th>
+                                <th>Số Lượt Sản Xuất</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tp-loaitram-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="charts-grid">
                 <div class="chart-card dashboard-card">
                     <h3>📈 Xu Hướng Sản Lượng Đầu Ra Theo Trạm</h3>
@@ -464,11 +497,11 @@
         </div>
     </div>
 
-    <script src="js/utils.js?v=20260812c"></script>
-    <script src="js/sales-dashboard.js?v=20260812c"></script>
-    <script src="js/production-dashboard.js?v=20260812c"></script>
-    <script src="js/finished-products-dashboard.js?v=20260812c"></script>
-    <script src="js/app.js?v=20260812c"></script>
+    <script src="js/utils.js?v=20260812d"></script>
+    <script src="js/sales-dashboard.js?v=20260812d"></script>
+    <script src="js/production-dashboard.js?v=20260812d"></script>
+    <script src="js/finished-products-dashboard.js?v=20260812d"></script>
+    <script src="js/app.js?v=20260812d"></script>
 </body>
 
 </html>

@@ -22,7 +22,15 @@ File logic: [`js/production-dashboard.js`](../js/production-dashboard.js) · Vù
 | Số Trạm Vận Hành | Số trạm (`TÊN TRẠM`) độc nhất |
 | Ca Vận Hành | Số loại ca (trong 5 nhóm chuẩn hoá) có dữ liệu trong khoảng lọc, không tính "Không rõ ca" |
 
-**Bộ lọc nhanh** — Hôm qua / 7 Ngày qua / Tháng này / Tháng trước / Xóa bộ lọc (`applyQuickRange()`). Dùng **"Hôm qua"** thay vì "Hôm nay" vì dữ liệu chuyến xe cũng cập nhật muộn hơn 1 ngày so với ngày thực tế, giống khối Thành phẩm đầu ra bên dưới.
+**Bộ lọc nhanh** — Hôm qua / 7 Ngày qua / Tháng này / Tháng trước / Xóa bộ lọc (`applyQuickRange()`). Dùng **"Hôm qua"** thay vì "Hôm nay" vì dữ liệu chuyến xe cũng cập nhật muộn hơn 1 ngày so với ngày thực tế, giống tab Thành Phẩm.
+
+## Bộ lọc — multi-select + lọc chéo
+
+Trạm / Sản phẩm / Xe / Ca dùng chung component `MultiSelect` (`js/utils.js`) — cùng cơ chế với tab Thành Phẩm: chọn được nhiều giá trị cùng lúc (không chọn gì = "tất cả"), và **lọc chéo** (`updateFacetOptions()`) — chọn trước 1 Trạm thì Sản phẩm/Xe/Ca chỉ còn hiện giá trị từng xuất hiện ở trạm đó trong khoảng ngày/tháng đang lọc, giúp danh sách gọn lại thay vì liệt kê hết. Riêng **Tháng** vẫn là `<select>` đơn thường (không multi-select) vì đã có Từ ngày/Đến ngày + bộ lọc nhanh làm việc đó rồi.
+
+## Tổng hợp theo loại trạm (Đá / Cát)
+
+Bảng "📊 Tổng Hợp Theo Loại Trạm" (`renderLoaiTramSummary()`, tbody `sx-loaitram-body`) gộp sản lượng vận chuyển theo nhóm trạm — trạm được phân loại Đá/Cát bằng cách so khớp chuỗi `"CAT"`/`"DA"` trong tên trạm (`classifyLoaiTram()`, cùng quy ước với `finished-products-dashboard.js`). Tính trên `this.filteredData`, tức tôn trọng **toàn bộ** filter đang chọn (kể cả Trạm/Sản phẩm/Xe/Ca) — khác bảng hiệu suất bên tab Thành Phẩm vốn cố định bỏ qua bộ lọc sản phẩm. Cột `% Trên Tổng Sản Lượng` là tỉ trọng của nhóm trong tổng sản lượng đã lọc.
 
 ## Ca làm việc
 
@@ -99,6 +107,17 @@ Nút bấm hiện "Tất cả trạm" khi chưa chọn gì, hiện thẳng tên 
 | Sản Lượng TB/Ngày (M³) | Tổng đầu ra đã lọc ÷ số ngày **thực sự có sản lượng ra** trong khoảng lọc (không chia cho tổng số ngày lịch, vì trạm không chạy liên tục mọi ngày) — kèm chú thích số ngày dùng để tính |
 | Số Trạm Vận Hành | Số trạm có lô trong khoảng lọc |
 | Số Lượt Sản Xuất | Số lô (`this.filteredLots.length`) |
+
+## Tổng hợp theo loại trạm (Đá / Cát)
+
+KPI "Tổng Đầu Vào/Đầu Ra" ở trên là số **gộp chung** đá + cát. Bảng "📊 Tổng Hợp Theo Loại Trạm" (`renderLoaiTramSummary()`, tbody `tp-loaitram-body`) tách riêng theo `loaiTram`, tính trên `filteredLots` (cùng quy ước với bảng Báo Cáo Hiệu Suất bên dưới — chỉ lọc theo ngày + trạm, **không** theo SP Đầu Ra/Vào):
+
+| Cột | Cách tính |
+|-----|-----------|
+| Số Trạm | Số trạm distinct trong nhóm có lô trong khoảng lọc |
+| Tổng Đầu Vào / Tổng Đầu Ra | Cộng dồn `khoiLuongVao`/`khoiLuongRa` của mọi lô trong nhóm (Đá hoặc Cát) |
+| Hiệu Suất Bình Quân (%) | Tổng đầu ra ÷ Tổng đầu vào **của cả nhóm** (không phải trung bình cộng % từng trạm) — kỳ vọng ~100% cho nhóm Đá, ~90% cho nhóm Cát |
+| Số Lượt Sản Xuất | Số lô trong nhóm |
 
 ## Biểu đồ xu hướng (theo yêu cầu "xem sự biến thiên")
 
