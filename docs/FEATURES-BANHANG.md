@@ -18,7 +18,7 @@ File logic: [`js/sales-dashboard.js`](../js/sales-dashboard.js) · Vùng HTML: `
 1. **Xu Hướng Doanh Thu Theo Ngày** (line, 2 trục Y) — trục trái: số lượng M³, trục phải: doanh thu
 2. **Top 10 Sản Phẩm** (bar ngang) — theo tổng số lượng
 3. **Top 10 Khách Hàng** (bar ngang) — theo tổng số lượng
-4. **Phân Bố Loại Đơn Hàng** (doughnut) — Hợp Đồng vs Bán Lẻ
+4. **Xu Hướng Sản Phẩm Bán Ra** (line, nhiều đường) — top 6 sản phẩm theo tổng số lượng đã lọc (tái dùng `topSp` đã tính ở chart Top 10 Sản Phẩm), mỗi sản phẩm 1 đường theo ngày — thấy rõ sản phẩm nào tăng/giảm theo thời gian, cùng kiểu với chart "Xu Hướng Sản Lượng Theo Sản Phẩm" bên tab Thành Phẩm. *(Đã bỏ "Phân Bố Loại Đơn Hàng" theo yêu cầu — thông tin Loại đơn vẫn còn ở bộ lọc và bảng chi tiết.)*
 
 ## Bộ lọc — cơ chế lọc chéo (faceted filtering)
 

@@ -360,34 +360,43 @@ class Dashboard {
             }
         });
 
-        // Chart 4: Loại đơn
-        const loaiGroups = {};
+        // Chart 4: Xu hướng sản phẩm bán ra — top 6 sản phẩm theo tổng số lượng đã lọc (tái dùng
+        // `topSp`/`sortedDates` đã tính ở Chart 1 & 2), mỗi sản phẩm 1 đường theo ngày, cùng kiểu với
+        // chart "Xu Hướng Sản Lượng Theo Sản Phẩm" bên tab Thành Phẩm.
+        const topSpForTrend = topSp.slice(0, 6).map(x => x[0]);
+        const spTrendByDate = {};
         this.filteredData.forEach(row => {
-            if (!loaiGroups[row.LoaiDonHang]) loaiGroups[row.LoaiDonHang] = 0;
-            loaiGroups[row.LoaiDonHang]++;
+            if (!topSpForTrend.includes(row.SanPham)) return;
+            if (!spTrendByDate[row.SanPham]) spTrendByDate[row.SanPham] = {};
+            spTrendByDate[row.SanPham][row.date] = (spTrendByDate[row.SanPham][row.date] || 0) + row.SoLuong;
+        });
+        const spTrendDatasets = topSpForTrend.map((sp, i) => {
+            const c = colors[i % colors.length];
+            return {
+                label: sp,
+                data: sortedDates.map(d => (spTrendByDate[sp] && spTrendByDate[sp][d]) || 0),
+                borderColor: c,
+                backgroundColor: c + '15',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2,
+                fill: false
+            };
         });
 
-        const ctx4 = document.getElementById('chart-loai').getContext('2d');
-        if (this.charts.loai) this.charts.loai.destroy();
-        this.charts.loai = new Chart(ctx4, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(loaiGroups),
-                datasets: [{
-                    data: Object.values(loaiGroups),
-                    backgroundColor: colors.slice(0, Object.keys(loaiGroups).length).map(c => c + 'CC'),
-                    borderColor: '#fff',
-                    borderWidth: 3
-                }]
-            },
+        const ctx4 = document.getElementById('chart-sanpham-trend').getContext('2d');
+        if (this.charts.sanphamTrend) this.charts.sanphamTrend.destroy();
+        this.charts.sanphamTrend = new Chart(ctx4, {
+            type: 'line',
+            data: { labels: sortedDates, datasets: spTrendDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '65%',
                 plugins: {
-                    legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } },
-                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed} đơn` } }
-                }
+                    legend: { position: 'bottom', labels: { usePointStyle: true } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} m³` } }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Số lượng (M³)' } } }
             }
         });
     }
