@@ -4,5 +4,6 @@ Nội dung file này đã được tách theo từng tab để dễ tra cứu v�
 
 - [`FEATURES-BANHANG.md`](FEATURES-BANHANG.md) — tính năng tab 📦 Bán Hàng
 - [`FEATURES-SANXUAT.md`](FEATURES-SANXUAT.md) — tính năng tab 🏭 Sản Xuất
+- [`FEATURES-THANHPHAM.md`](FEATURES-THANHPHAM.md) — tính năng tab 🧱 Thành Phẩm
 
 Xem thêm [`ARCHITECTURE.md`](ARCHITECTURE.md) cho cấu trúc file/thư mục, và [`DEVELOPMENT.md`](DEVELOPMENT.md) cho hướng dẫn thêm tính năng.
