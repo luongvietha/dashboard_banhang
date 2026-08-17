@@ -253,35 +253,40 @@ class FinishedProductsDashboard {
     // Tổng hợp Đầu Vào/Đầu Ra/Hiệu Suất bình quân tách riêng theo LOẠI TRẠM (Đá / Cát) — cùng
     // nguồn (filteredLots, chỉ lọc theo ngày + trạm) và cùng công thức hiệu suất (tổng ra ÷ tổng vào)
     // với bảng "Báo Cáo Hiệu Suất Vận Hành Theo Trạm", chỉ khác là gộp theo nhóm thay vì từng trạm.
+    // Năng Suất TB = tổng đầu ra của nhóm ÷ số NGÀY THỰC SỰ có đầu ra > 0 trong nhóm đó (không chia
+    // cho tổng số ngày lịch) — cho biết tốc độ sản xuất bình quân mỗi ngày hoạt động của cả nhóm.
     renderLoaiTramSummary() {
         const body = document.getElementById('tp-loaitram-body');
         if (!body) return;
 
         const groups = {};
         this.filteredLots.forEach(l => {
-            if (!groups[l.loaiTram]) groups[l.loaiTram] = { vao: 0, ra: 0, trams: new Set(), luot: 0 };
+            if (!groups[l.loaiTram]) groups[l.loaiTram] = { vao: 0, ra: 0, trams: new Set(), luot: 0, days: new Set() };
             const g = groups[l.loaiTram];
             g.vao += l.khoiLuongVao;
             g.ra += l.khoiLuongRa;
             g.luot++;
             if (l.tenTram) g.trams.add(l.tenTram);
+            if (l.ngayISO && l.khoiLuongRa > 0) g.days.add(l.ngayISO);
         });
 
         const order = ['Đá', 'Cát', 'Khác'];
         const rows = order.filter(k => groups[k]).map(loai => {
             const g = groups[loai];
             const hieuSuat = g.vao > 0 ? (g.ra / g.vao * 100) : null;
+            const nangSuat = g.days.size > 0 ? (g.ra / g.days.size) : 0;
             return `<tr>
                 <td>${loai}</td>
                 <td>${g.trams.size}</td>
                 <td>${formatSmartNumber(g.vao, 'volume')}</td>
                 <td>${formatSmartNumber(g.ra, 'volume')}</td>
                 <td>${hieuSuat === null ? '--' : hieuSuat.toFixed(1) + '%'}</td>
+                <td>${formatSmartNumber(nangSuat, 'volume')}</td>
                 <td>${g.luot.toLocaleString('vi-VN')}</td>
             </tr>`;
         });
 
-        body.innerHTML = rows.join('') || '<tr><td colspan="6">Không có dữ liệu trong khoảng lọc hiện tại</td></tr>';
+        body.innerHTML = rows.join('') || '<tr><td colspan="7">Không có dữ liệu trong khoảng lọc hiện tại</td></tr>';
     }
 
     renderKPIs() {

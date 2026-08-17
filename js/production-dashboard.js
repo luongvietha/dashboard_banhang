@@ -262,6 +262,9 @@ class ProductionDashboard {
     // Tổng hợp sản lượng vận chuyển tách riêng theo LOẠI TRẠM (Đá / Cát), tính trên this.filteredData
     // (tức là tôn trọng toàn bộ filter đang chọn, kể cả Trạm/Sản phẩm/Xe/Ca — khác bảng hiệu suất bên
     // tab Thành Phẩm vốn cố định bỏ qua bộ lọc SP, vì ở đây không có khái niệm "hiệu suất vào/ra").
+    // Năng Suất TB = tổng sản lượng của nhóm ÷ số NGÀY THỰC SỰ có sản lượng > 0 trong nhóm đó (không
+    // chia cho tổng số ngày lịch, cùng quy ước với "Sản Lượng TB/Ngày" bên tab Thành Phẩm) — cho biết
+    // tốc độ sản xuất/vận chuyển bình quân mỗi ngày hoạt động, khác với Tổng Sản Lượng (chỉ là cộng dồn).
     renderLoaiTramSummary() {
         const body = document.getElementById('sx-loaitram-body');
         if (!body) return;
@@ -269,10 +272,11 @@ class ProductionDashboard {
         const groups = {};
         this.filteredData.forEach(row => {
             const loai = this.classifyLoaiTram(row.TenTram);
-            if (!groups[loai]) groups[loai] = { khoiluong: 0, chuyen: 0, trams: new Set() };
+            if (!groups[loai]) groups[loai] = { khoiluong: 0, chuyen: 0, trams: new Set(), days: new Set() };
             groups[loai].khoiluong += row.TongKhoiLuong;
             groups[loai].chuyen += row.SoChuyen;
             if (row.TenTram) groups[loai].trams.add(row.TenTram);
+            if (row.date && row.TongKhoiLuong > 0) groups[loai].days.add(row.date);
         });
 
         const tongKL = this.filteredData.reduce((s, r) => s + r.TongKhoiLuong, 0);
@@ -280,16 +284,18 @@ class ProductionDashboard {
         const rows = order.filter(k => groups[k]).map(loai => {
             const g = groups[loai];
             const pct = tongKL > 0 ? (g.khoiluong / tongKL * 100) : 0;
+            const nangSuat = g.days.size > 0 ? (g.khoiluong / g.days.size) : 0;
             return `<tr>
                 <td>${loai}</td>
                 <td>${g.trams.size}</td>
                 <td>${formatSmartNumber(g.khoiluong, 'volume')}</td>
                 <td>${g.chuyen.toLocaleString('vi-VN')}</td>
                 <td>${pct.toFixed(1)}%</td>
+                <td>${formatSmartNumber(nangSuat, 'volume')}</td>
             </tr>`;
         });
 
-        body.innerHTML = rows.join('') || '<tr><td colspan="5">Không có dữ liệu trong khoảng lọc hiện tại</td></tr>';
+        body.innerHTML = rows.join('') || '<tr><td colspan="6">Không có dữ liệu trong khoảng lọc hiện tại</td></tr>';
     }
 
     renderKPIs() {
